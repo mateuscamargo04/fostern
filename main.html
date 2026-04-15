@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fostern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="img/png" href="img/Logo.jpeg">
+
+<style>
+:root{
+  --bg:#000;--bg-sub:#0a0a0a;--surface:rgba(255,255,255,.04);--surface-hov:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.09);--border-hov:rgb(255, 255, 255);
+  --text:#ffffff;--text-sub:#ffffff;--text-muted:#b9b9b9;--text-faint:#d8d8d8;
+  --btn:#ffffff;--btn-txt:#000;--label:rgba(255,255,255,.3);
+  --scrollbar:rgba(255,255,255,.1);--notif-bg:#080808;
+  --sidebar-w:218px;--topbar-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;height:100vh;overflow:hidden;transition:background .35s,color .35s;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:99px;}
+input,textarea,button{font-family:'Inter',sans-serif;}
+input::placeholder,textarea::placeholder{color:var(--text-faint);}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100vh;}
+
+/* SIDEBAR */
+#sidebar{
+  width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;z-index:10;transition:all .35s;
+}
+.logo-row{padding:18px 16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;}
+.logo-icon{width:34px;height:34px;background:var(--text);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;}
+.logo-icon svg{transition:all .3s;}
+.logo-word{font-family:'Inter',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em;color:var(--text); height: 35px; width: 160px;}
+.nav-list{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:12px;
+  border:none;border-left:3px solid transparent;background:transparent;color:var(--text-muted);
+  cursor:pointer;text-align:left;font-size:13px;font-weight:400;font-family:'Inter',sans-serif;
+  margin-bottom:2px;transition:all .18s;outline:none;
+}
+.nav-item.active{background:var(--surface-hov);color:var(--text);font-weight:700;border-left-color:var(--text);}
+.nav-icon{font-size:12px;width:18px;text-align:center;flex-shrink:0;opacity:.4;transition:opacity .18s;}
+.nav-item.active .nav-icon{opacity:1;}
+.nav-dot{margin-left:auto;width:6px;height:6px;background:var(--text-faint);border-radius:50%;flex-shrink:0;transition:all .3s;}
+.nav-item[data-id="ai"].active .nav-dot{background:var(--text);}
+.premium-card{margin:0 10px 14px;background:var(--surface-hov);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px;}
+.premium-card h4{color:var(--text);font-size:13px;font-weight:700;font-family:'Inter',sans-serif;margin-bottom:5px;}
+.premium-card p{color:var(--text-muted);font-size:11px;line-height:1.55;margin-bottom:12px;}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+#topbar{
+  height:var(--topbar-h);border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 26px;gap:12px;background:rgba(0,0,0,.5);backdrop-filter:blur(20px);
+  flex-shrink:0;transition:all .35s;
+}
+.search-box{flex:1;max-width:380px;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:7px 14px;}
+.search-box input{background:none;border:none;color:var(--text);font-size:12px;outline:none;flex:1;}
+.search-box .kbd{background:var(--surface-hov);color:var(--text-muted);font-size:9px;padding:2px 6px;border-radius:5px;border:1px solid var(--border);letter-spacing:.04em;}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.icon-btn{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--text-sub);transition:all .2s;position:relative;
+}
+.icon-btn:hover{background:var(--surface-hov);border-color:var(--border-hov);}
+.notif-dot{position:absolute;top:8px;right:8px;width:6px;height:6px;background:var(--text);border-radius:50%;border:2px solid var(--bg);}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--text),var(--text-muted));display:flex;align-items:center;justify-content:center;color:var(--btn-txt);font-weight:800;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0;}
+
+/* NOTIF DROPDOWN */
+.notif-dropdown{
+  position:absolute;top:46px;right:0;width:280px;background:var(--notif-bg);
+  border:1px solid var(--border);border-radius:16px;padding:16px 18px;z-index:200;
+  box-shadow:0 24px 60px rgba(0,0,0,.25);display:none;
+}
+.notif-dropdown.open{display:block;animation:fade .2s ease;}
+.notif-title{color:var(--text);font-size:13px;font-weight:700;font-family:'Inter',sans-serif;margin-bottom:14px;}
+.notif-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item-icon{color:var(--text-muted);font-size:12px;flex-shrink:0;margin-top:1px;}
+.notif-item-text{color:var(--text-sub);font-size:12px;line-height:1.5;}
+.notif-item-time{color:var(--text-muted);font-size:10px;margin-top:3px;}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:28px 32px;}
+.page{animation:fade .3s ease;}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(18px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;display:none;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--bg-sub);border:1px solid var(--border);border-radius:24px;padding:48px 44px;
+  max-width:420px;width:90%;text-align:center;box-shadow:0 48px 96px rgba(0,0,0,.7);
+  animation:popIn .25s cubic-bezier(.175,.885,.32,1.275);
+}
+.modal-icon{width:64px;height:64px;background:var(--surface);border:1px solid var(--border);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 22px;}
+.modal-box h2{color:var(--text);font-size:26px;font-weight:700;font-family:'Inter',sans-serif;margin-bottom:12px;}
+.modal-box p{color:var(--text-sub);font-size:14px;line-height:1.75;margin-bottom:32px;}
+.modal-box strong{color:var(--text);}
+
+/* BUTTONS */
+.btn-primary{
+  background:linear-gradient(135deg,var(--btn) 0%,var(--text-muted) 100%);
+  border:none;color:var(--btn-txt);border-radius:14px;padding:12px 22px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+  letter-spacing:.01em;transition:all .25s cubic-bezier(.175,.885,.32,1.275);
+  color: #080808;
+}
+.btn-primary:hover{transform:scale(1.025) translateY(-1px);box-shadow:0 8px 28px rgba(255,255,255,.1);}
+.btn-primary:disabled{background:var(--surface);color:var(--text-faint);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{
+  background:var(--surface);border:1px solid var(--border);color:var(--text-sub);
+  border-radius:12px;padding:9px 16px;font-size:12px;font-weight:500;cursor:pointer;
+  transition:all .2s;
+}
+.btn-ghost:hover{background:var(--surface-hov);border-color:var(--border-hov);color:var(--text);}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;transition:border-color .2s;}
+
+/* LABEL */
+.lbl{color:var(--label);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;font-family:'Inter',sans-serif;}
+
+/* SECTION HEADER */
+.sh{margin-bottom:30px;}
+.sh h1{color:var(--text);font-size:32px;font-weight:800;font-family:'Inter',sans-serif;margin:0 0 8px;letter-spacing:-.03em;line-height:1.1;}
+.sh p{color:var(--text-sub);font-size:14px;margin:0;line-height:1.5;}
+
+/* BIG STATS */
+.stats-row{display:flex;gap:14px;margin-bottom:26px;flex-wrap:wrap;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px 24px;flex:1;min-width:130px;transition:all .2s;}
+.stat-num{font-size:52px;font-family:'Sora',sans-serif;font-weight:800;letter-spacing:-.04em;background:linear-gradient(160deg,var(--text) 0%,var(--text-muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+.stat-lbl{color:var(--text-muted);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;font-family:'Sora',sans-serif;}
+
+/* GRAD BAR */
+.gradbar{margin-bottom:18px;}
+.gradbar-head{display:flex;justify-content:space-between;margin-bottom:8px;}
+.gradbar-lbl{color:var(--text-sub);font-size:13px;}
+.gradbar-val{color:var(--text);font-size:13px;font-weight:700;}
+.gradbar-track{height:4px;background:var(--surface);border-radius:99px;overflow:hidden;border:1px solid var(--border);}
+.gradbar-fill{height:100%;background:linear-gradient(90deg,var(--text) 0%,var(--text-muted) 100%);border-radius:99px;transition:width 1.4s cubic-bezier(.25,.46,.45,.94);}
+
+/* CHIP */
+.chip{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);font-size:10px;padding:2px 10px;border-radius:99px;font-weight:600;letter-spacing:.05em;border:1px solid rgba(255,255,255,.08);font-family:'Sora',sans-serif;}
+.chip.medium{background:rgba(255,255,255,.08);color:rgba(255,255,255,.55);}
+.chip.hard,.chip.advanced{background:rgba(255,255,255,.13);color:rgba(255,255,255,.8);}
+
+/* 2-COL GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* LOCK OVERLAY */
+.lock-overlay{
+  position:absolute;inset:0;border-radius:20px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;z-index:2;cursor:pointer;gap:10px;
+  backdrop-filter:blur(5px);
+}
+
+/* ANIMATIONS */
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 160px);max-height:640px;}
+.chat-msgs{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;overflow-y:auto;margin-bottom:12px;}
+.msg-row{display:flex;gap:11px;margin-bottom:16px;}
+.msg-row.user{flex-direction:row-reverse;}
+.msg-av{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:'Sora',sans-serif;}
+.msg-av.ai{background:var(--text);color:var(--btn-txt);}
+.msg-av.user{background:var(--surface-hov);color:var(--text-sub);}
+.msg-bubble{max-width:72%;background:var(--surface-hov);border:1px solid var(--border);border-radius:16px;padding:12px 16px;color:var(--text-sub);font-size:13px;line-height:1.75;}
+.msg-row.ai .msg-bubble{border-top-left-radius:4px;}
+.msg-row.user .msg-bubble{border-top-right-radius:4px;}
+.chat-suggestions{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+.chat-input-row{display:flex;gap:10px;}
+.chat-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 18px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;}
+.chat-input:focus{border-color:var(--border-hov);}
+
+/* FEEDBACK STARS */
+.stars-row{display:flex;gap:12px;margin-bottom:24px;}
+.star-btn{background:none;border:none;cursor:pointer;font-size:34px;transition:transform .2s cubic-bezier(.175,.885,.32,1.275);filter:grayscale(1) opacity(.2);}
+.star-btn.active,.star-btn.hov{filter:none;transform:scale(1.35) translateY(-2px);}
+.feedback-textarea{width:100%;background:var(--surface-hov);border:1px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--text);font-size:13px;line-height:1.7;min-height:130px;outline:none;resize:vertical;transition:border-color .2s;font-family:'DM Sans',sans-serif;}
+.feedback-textarea:focus{border-color:var(--border-hov);}
+
+/* COMMUNITY POST */
+.post-composer{margin-bottom:18px;}
+.post-input{width:100%;background:none;border:none;color:var(--text);font-size:14px;outline:none;padding:4px 0;}
+.post-footer{display:flex;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.post-action{background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;transition:color .2s;padding:0;}
+.post-action:hover{color:var(--text-sub);}
+
+/* STREAK GRID */
+.streak-grid{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:18px;}
+.streak-dot{width:23px;height:23px;border-radius:6px;background:var(--surface);border:1px solid var(--border);transition:all .3s;}
+.streak-dot.done{background:var(--text);box-shadow:0 0 8px rgba(255,255,255,.15);border-color:transparent;}
+.streak-dot.partial{opacity:.35;}
+
+/* SETTINGS FORM */
+.form-group{margin-bottom:14px;}
+.form-label{color:var(--text-muted);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px;font-family:'Sora',sans-serif;}
+.form-input{width:100%;background:var(--surface-hov);border:1px solid var(--border);border-radius:12px;padding:12px 15px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--border-hov);}
+
+/* PILLS / ACHIEVEMENTS */
+.achievement{background:var(--surface-hov);border:1px solid var(--border);border-radius:99px;padding:6px 14px;color:var(--text-sub);font-size:12px;font-weight:500;display:inline-block;}
+
+/* PROGRESS BAR WELCOME */
+.welcome-title{font-family:'Sora',sans-serif;font-weight:800;font-size:44px;letter-spacing:-.04em;line-height:1.05;margin-bottom:8px;}
+.welcome-gradient{background:linear-gradient(135deg,var(--text) 0%,var(--text-muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.date-label{color:var(--text-faint);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;font-weight:600;font-family:'Sora',sans-serif;}
+#b1 {
+  color: #000;
+  text-decoration: none;
+
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="logo-row">
+      
+      <img src="img/Fostern.jpeg" alt="" class="logo-word">
+    </div>
+    <div class="nav-list" id="nav-list"></div>
+    <div class="premium-card">
+      <h4>Unlock Premium</h4>
+      <p>Full access to all lessons, challenges & exclusive content.</p>
+      <button class="btn-primary" style="width:100%;padding:9px;font-size:12px;" onclick="showModal()">Upgrade Now →</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div class="search-box">
+        <span style="color:var(--text-muted);font-size:13px;">⌕</span>
+        <input placeholder="Search lessons, challenges...">
+        <span class="kbd">⌘K</span>
+      </div>
+      <div class="topbar-actions">
+        <div style="position:relative;">
+          <button class="icon-btn" onclick="toggleNotif()">🔔<div class="notif-dot"></div></button>
+          <div class="notif-dropdown" id="notif-dd">
+            <div class="notif-title">Notifications</div>
+            <div class="notif-item"><span class="notif-item-icon">◆</span><div><div class="notif-item-text">7-day streak! Keep it up.</div><div class="notif-item-time">Just now</div></div></div>
+            <div class="notif-item"><span class="notif-item-icon">▷</span><div><div class="notif-item-text">New lesson available</div><div class="notif-item-time">1h ago</div></div></div>
+            <div class="notif-item"><span class="notif-item-icon">◎</span><div><div class="notif-item-text">Chevening deadline in 30 days</div><div class="notif-item-time">3h ago</div></div></div>
+            <div class="notif-item"><span class="notif-item-icon">⊙</span><div><div class="notif-item-text">Priya commented on your post</div><div class="notif-item-time">5h ago</div></div></div>
+          </div>
+        </div>
+        <button class="icon-btn" onclick="navigate('settings')">⚙️</button>
+        <div class="avatar" onclick="navigate('settings')">J</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- PREMIUM MODAL -->
+<div class="modal-overlay" id="modal" onclick="hideModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-icon">🔒</div>
+    <h2>Premium Content</h2>
+    <p>This content is available for <strong>Fostern Premium</strong> members. Unlock the full experience and reach your goals faster.</p>
+    <button class="btn-primary" style="width:100%;margin-bottom:10px;padding:15px;" onclick="hideModal()" id="b1"><a href="payment.html">Upgrade to Premium → </a></button>
+    <button class="btn-ghost" style="width:100%;padding:12px;" onclick="hideModal()">Maybe later</button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let isDark = true;
+let feedRating = 0;
+
+const NAV = [
+  { id:'dashboard',     label:'Dashboard',        icon:'⊞' },
+  { id:'learn',         label:'Start Learning',   icon:'▷' },
+  { id:'progress',      label:'My Progress',      icon:'◈' },
+  { id:'challenges',    label:'Challenges',       icon:'◆' },
+  { id:'opportunities', label:'Opportunities',    icon:'◎' },
+  { id:'ai',            label:'AI Assistant',     icon:'✦' },
+  { id:'feedback',      label:'Feedback',         icon:'◉' },
+  { id:'community',     label:'Community',        icon:'⊙' },
+  { id:'settings',      label:'Account Settings', icon:'⚙' },
+];
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  navigate('dashboard');
+  updateThemeIcons();
+});
+
+function buildNav() {
+  const list = document.getElementById('nav-list');
+  list.innerHTML = NAV.map(n => `
+    <button class="nav-item" data-id="${n.id}" onclick="navigate('${n.id}')">
+      <span class="nav-icon">${n.icon}</span>
+      ${n.label}
+      ${n.id==='ai'?'<span class="nav-dot"></span>':''}
+    </button>
+  `).join('');
+}
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === page);
+  });
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="page">${renderPage(page)}</div>`;
+  initPage(page);
+}
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  updateThemeIcons();
+}
+function updateThemeIcons() {
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+  const logoPath = document.querySelector('#logo-svg path');
+  const logoPoly = document.querySelector('#logo-svg polygon');
+  if(logoPath) logoPath.setAttribute('fill', isDark ? '#000' : '#fff');
+  if(logoPoly) logoPoly.setAttribute('fill', isDark ? '#555' : '#aaa');
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function showModal() { document.getElementById('modal').classList.add('open'); }
+function hideModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ─── NOTIF ────────────────────────────────────────────────────────────────────
+function toggleNotif() {
+  document.getElementById('notif-dd').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('#notif-dd') && !e.target.closest('.icon-btn'))
+    document.getElementById('notif-dd')?.classList.remove('open');
+});
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function gradBar(label, value) {
+  return `<div class="gradbar">
+    <div class="gradbar-head"><span class="gradbar-lbl">${label}</span><span class="gradbar-val">${value}%</span></div>
+    <div class="gradbar-track"><div class="gradbar-fill" style="width:0%" data-target="${value}"></div></div>
+  </div>`;
+}
+function animBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.gradbar-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+  }, 80);
+}
+function chip(label) {
+  const cls = ({Medium:'medium',Intermediate:'medium',Hard:'hard',Advanced:'advanced'}[label]||'');
+  return `<span class="chip ${cls}">${label}</span>`;
+}
+function card(content, style='') {
+  return `<div class="card" style="${style}">${content}</div>`;
+}
+
+// ─── PAGES ────────────────────────────────────────────────────────────────────
+function renderPage(page) {
+  switch(page) {
+    case 'dashboard':     return pageDashboard();
+    case 'learn':         return pageLearn();
+    case 'progress':      return pageProgress();
+    case 'challenges':    return pageChallenges();
+    case 'opportunities': return pageOpportunities();
+    case 'ai':            return pageAI();
+    case 'feedback':      return pageFeedback();
+    case 'community':     return pageCommunity();
+    case 'settings':      return pageSettings();
+    default:              return pageDashboard();
+  }
+}
+
+function initPage(page) {
+  if(['dashboard','progress','learn','challenges','opportunities','settings'].includes(page)) animBars();
+  if(page==='feedback') initFeedback();
+  if(page==='ai') initChat();
+}
+
+// DASHBOARD
+function pageDashboard() {
+  return `
+    <div>
+      <div class="date-label">Friday, March 6, 2026</div>
+      <h1 class="welcome-title">Welcome back<br><span class="welcome-gradient">to Fostern.</span></h1>
+      <p style="color:var(--text-sub);font-size:15px;line-height:1.6;margin-bottom:32px;">You're on a 7-day streak — keep the momentum going.</p>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num">24</div><div class="stat-lbl">Lessons Done</div></div>
+        <div class="stat-card"><div class="stat-num">6</div><div class="stat-lbl">Challenges</div></div>
+        <div class="stat-card"><div class="stat-num">7<span style="font-size:16px;color:var(--text-muted);font-family:'DM Sans',sans-serif;vertical-align:middle;margin-left:4px;-webkit-text-fill-color:var(--text-muted)"> days</span></div><div class="stat-lbl">Study Streak</div></div>
+        <div class="stat-card"><div class="stat-num">Lv4</div><div class="stat-lbl">Skill Level</div></div>
+      </div>
+      <div class="grid-2">
+        ${card(`
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div class="lbl" style="margin:0">Current Path</div>
+            <button class="btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="navigate('learn')">View all</button>
+          </div>
+          <div style="color:var(--text);font-size:17px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:-.02em;margin-bottom:4px;">English Fluency System</div>
+          <div style="color:var(--text-muted);font-size:12px;margin-bottom:20px;">Lesson 3 of 8 · Advanced Communication</div>
+          ${gradBar('Module Progress', 37)}
+          <button class="btn-primary" style="width:100%;margin-top:4px;" onclick="navigate('learn')">Continue →</button>
+        `)}
+        ${card(`
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div class="lbl" style="margin:0">Weekly Progress</div>
+            <span style="color:var(--text-muted);font-size:12px;font-weight:600;">+12% vs last week</span>
+          </div>
+          ${gradBar('Learning Goals', 72)}
+          ${gradBar('Challenges', 50)}
+          ${gradBar('Community', 85)}
+        `)}
+      </div>
+      <div class="grid-2">
+        ${card(`
+          <div class="lbl">Next Challenge</div>
+          <div style="color:var(--text);font-size:17px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:-.02em;margin-bottom:8px;">Build a Mini Project</div>
+          <div style="color:var(--text-sub);font-size:13px;line-height:1.7;margin-bottom:18px;">Create a simple web app demonstrating your skills from this week's lessons.</div>
+          <button class="btn-ghost" onclick="navigate('challenges')">View Challenge →</button>
+        `)}
+        ${card(`
+          <div class="lbl">Recommended</div>
+          ${['Thinking Like an MIT Student','Global Opportunities Guide','Research Program Basics'].map((l,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;${i<2?'border-bottom:1px solid var(--border)':''}">
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--border-hov);flex-shrink:0;"></div>
+              <span style="color:var(--text-sub);font-size:13px;">${l}</span>
+            </div>
+          `).join('')}
+        `)}
+      </div>
+    </div>`;
+}
+
+// LEARN
+function pageLearn() {
+  const modules = [
+    { title:'Introduction to Global Learning', n:'01', locked:false, lessons:[
+      {t:'What is Global Thinking?',d:'8 min',diff:'Beginner',done:true},
+      {t:'Setting Your Learning Goals',d:'12 min',diff:'Beginner',done:true},
+      {t:'Building a Study System',d:'15 min',diff:'Intermediate',done:false},
+    ]},
+    { title:'English Fluency System', n:'02', locked:false, lessons:[
+      {t:'Advanced Conversation',d:'20 min',diff:'Intermediate',done:true},
+      {t:'Academic Writing Mastery',d:'25 min',diff:'Advanced',done:false},
+      {t:'Presentation Skills',d:'18 min',diff:'Intermediate',done:false},
+    ]},
+    { title:'Building Your First Project', n:'03', locked:false, lessons:[
+      {t:'Project Planning 101',d:'10 min',diff:'Beginner',done:false},
+      {t:'Prototyping Your Idea',d:'22 min',diff:'Intermediate',done:false},
+    ]},
+    { title:'Thinking Like an MIT Student', n:'04', locked:true, lessons:[
+      {t:'Systems Thinking',d:'30 min',diff:'Advanced',done:false},
+      {t:'First Principles Reasoning',d:'28 min',diff:'Advanced',done:false},
+    ]},
+    { title:'Global Opportunities', n:'05', locked:true, lessons:[
+      {t:'Scholarship Strategy',d:'20 min',diff:'Intermediate',done:false},
+      {t:'Application Masterclass',d:'35 min',diff:'Advanced',done:false},
+    ]},
+  ];
+  return `
+    <div>
+      <div class="sh"><h1>Start Learning</h1><p>Your personalized learning modules. Progress at your own pace.</p></div>
+      <div class="grid-2">
+        ${modules.map(m=>`
+          <div class="card" style="position:relative;overflow:hidden;">
+            ${m.locked?`<div class="lock-overlay" style="background:${isDark?'rgba(0,0,0,.78)':'rgba(244,244,244,.88)'}" onclick="showModal()">
+              <div style="font-size:30px;">🔒</div>
+              <span style="color:var(--text-sub);font-size:12px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:.04em;">Premium Only</span>
+            </div>`:''}
+            <div style="color:var(--text-muted);font-size:11px;font-weight:700;margin-bottom:16px;font-family:'Sora',sans-serif;letter-spacing:.06em;text-transform:uppercase;">Module ${m.n}</div>
+            <div style="color:var(--text);font-size:16px;font-weight:700;margin-bottom:20px;line-height:1.35;font-family:'Sora',sans-serif;letter-spacing:-.02em;">${m.title}</div>
+            ${m.lessons.map(l=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface-hov);border-radius:12px;margin-bottom:7px;border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <div style="width:6px;height:6px;border-radius:50%;background:${l.done?'var(--text)':'var(--text-faint)'};flex-shrink:0;"></div>
+                  <span style="color:${l.done?'var(--text-sub)':'var(--text-muted)'};font-size:13px;">${l.t}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span style="color:var(--text-muted);font-size:11px;">${l.d}</span>
+                  ${chip(l.diff)}
+                </div>
+              </div>
+            `).join('')}
+            <button class="btn-primary" style="margin-top:12px;width:100%;">Start Module →</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// PROGRESS
+function pageProgress() {
+  const skills = [
+    ['English Communication',72],['Critical Thinking',58],
+    ['Research Skills',45],['Technical Writing',63],['Project Management',30]
+  ];
+  return `
+    <div>
+      <div class="sh"><h1>My Progress</h1><p>Track your growth and celebrate every milestone.</p></div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        ${card(`
+          <div class="lbl">Skill Tree</div>
+          ${skills.map(([l,v])=>gradBar(l,v)).join('')}
+        `)}
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          ${card(`
+            <div class="lbl">Learning Streak</div>
+            <div class="streak-grid">
+              ${Array(28).fill(0).map((_,i)=>`
+                <div class="streak-dot${i<7?' done':i<14?' partial':''}"></div>
+              `).join('')}
+            </div>
+            <div style="font-family:'Sora',sans-serif;font-size:44px;font-weight:800;letter-spacing:-.04em;background:linear-gradient(160deg,var(--text) 0%,var(--text-muted) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;">7 days</div>
+            <div style="color:var(--text-muted);font-size:13px;margin-top:6px;">Keep it going. You're crushing it.</div>
+          `)}
+          ${card(`
+            <div class="lbl">Achievements</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              ${['7-Day Streak','First Lesson','Speed Learner','Challenge Master','Global Thinker'].map(a=>`<span class="achievement">◆ ${a}</span>`).join('')}
+            </div>
+          `)}
+        </div>
+      </div>
+      ${card(`<div style="text-align:center;padding:6px 0;">
+        <div style="color:var(--text);font-size:18px;font-weight:800;font-family:'Sora',sans-serif;letter-spacing:-.02em;margin-bottom:6px;">3 lessons completed this week</div>
+        <div style="color:var(--text-sub);font-size:13px;">25% more than last week. Keep pushing your limits.</div>
+      </div>`)}
+    </div>`;
+}
+
+// CHALLENGES
+function pageChallenges() {
+  const list = [
+    {title:'Build a Mini Project',desc:'Create a prototype that solves a real problem in your community.',diff:'Medium',locked:false,n:'01'},
+    {title:'Solve a Real-World Problem',desc:'Identify a local challenge and propose a data-driven solution.',diff:'Hard',locked:false,n:'02'},
+    {title:'Create a Portfolio Piece',desc:'Design and present a personal project to showcase your skills.',diff:'Medium',locked:true,n:'03'},
+    {title:'Startup Idea Challenge',desc:'Pitch a business idea addressing a global problem with clear value.',diff:'Hard',locked:true,n:'04'},
+    {title:'Communication Sprint',desc:'Record a 3-minute presentation on any topic you\'re passionate about.',diff:'Easy',locked:false,n:'05'},
+    {title:'Research Deep Dive',desc:'Write a structured research summary on a subject that interests you.',diff:'Medium',locked:true,n:'06'},
+  ];
+  return `
+    <div>
+      <div class="sh"><h1>Challenges</h1><p>Real-world challenges to sharpen your skills and build your portfolio.</p></div>
+      <div class="grid-3">
+        ${list.map(c=>`
+          <div class="card" style="position:relative;overflow:hidden;">
+            ${c.locked?`<div class="lock-overlay" style="background:${isDark?'rgba(0,0,0,.78)':'rgba(244,244,244,.88)'}" onclick="showModal()">
+              <div style="font-size:28px;">🔒</div>
+              <span style="color:var(--text-sub);font-size:12px;font-weight:700;font-family:'Sora',sans-serif;">Premium Only</span>
+            </div>`:''}
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <span style="color:var(--text-muted);font-size:11px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:.06em;text-transform:uppercase;">Challenge ${c.n}</span>
+              ${chip(c.diff)}
+            </div>
+            <div style="color:var(--text);font-size:15px;font-weight:700;margin-bottom:8px;line-height:1.4;font-family:'Sora',sans-serif;letter-spacing:-.02em;">${c.title}</div>
+            <div style="color:var(--text-sub);font-size:13px;line-height:1.7;margin-bottom:20px;">${c.desc}</div>
+            <button class="btn-primary" style="width:100%;">Start Challenge →</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+// OPPORTUNITIES
+function pageOpportunities() {
+  const list = [
+    {title:'MIT Global Teaching Labs',org:'Massachusetts Institute of Technology',type:'Program',dl:'Apr 15'},
+    {title:'Chevening Scholarship',org:'UK Foreign Commonwealth Office',type:'Scholarship',dl:'Nov 2'},
+    {title:'Google Summer of Code',org:'Google LLC',type:'Internship',dl:'Mar 31'},
+    {title:'ISEF Science Fair',org:'Society for Science',type:'Competition',dl:'May 1'},
+    {title:'Fulbright Exchange Program',org:'U.S. Department of State',type:'Scholarship',dl:'Oct 10'},
+    {title:'YC Startup School',org:'Y Combinator',type:'Program',dl:'Rolling'},
+  ];
+  return `
+    <div>
+      <div class="sh"><h1>Opportunities</h1><p>Scholarships, competitions, and programs curated for your profile.</p></div>
+      <div class="grid-3">
+        ${list.map(o=>card(`
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <span style="background:var(--surface-hov);border:1px solid var(--border);color:var(--text-sub);font-size:10px;padding:3px 10px;border-radius:99px;font-weight:700;letter-spacing:.06em;font-family:'Sora',sans-serif;">${o.type}</span>
+            <span style="color:var(--text-muted);font-size:11px;font-weight:600;">${o.dl!=='Rolling'?'DL '+o.dl:'Rolling'}</span>
+          </div>
+          <div style="color:var(--text);font-size:15px;font-weight:700;margin-bottom:5px;line-height:1.35;font-family:'Sora',sans-serif;letter-spacing:-.02em;">${o.title}</div>
+          <div style="color:var(--text-muted);font-size:12px;margin-bottom:20px;line-height:1.5;">${o.org}</div>
+          <button class="btn-ghost" style="width:100%;">Learn More →</button>
+        `, 'cursor:pointer;')).join('')}
+      </div>
+    </div>`;
+}
+
+// AI
+function pageAI() {
+  const initMsgs = [
+    {r:'ai',tx:"Hi! I'm your Fostern AI tutor. I'm here to help you learn smarter and reach the world's top universities. What would you like to work on today?"},
+    {r:'user',tx:"How can I improve my English for university applications?"},
+    {r:'ai',tx:"Focus on four things: read academic sources daily, write essays using the PEEL structure, practice speaking with the Shadowing technique, and complete TOEFL prep in our English Fluency module. Want me to build a personalized 30-day plan?"},
+    {r:'user',tx:"What should I study to get into MIT?"},
+    {r:'ai',tx:"MIT values depth over breadth. Prioritize strong Math & Sciences, meaningful research, exceptional essays, and demonstrated leadership. The 'Thinking Like an MIT Student' module was built exactly for this path."},
+  ];
+  const suggestions = ['Help me start a project','Top scholarships for my region','How to write a personal statement','Review my study plan'];
+  return `
+    <div>
+      <div class="sh"><h1>AI Assistant</h1><p>Your personal AI tutor, available 24/7.</p></div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs">
+          ${initMsgs.map(m=>`
+            <div class="msg-row ${m.r}">
+              <div class="msg-av ${m.r}">${m.r==='ai'?'F':'J'}</div>
+              <div class="msg-bubble">${m.tx}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="chat-suggestions">
+          ${suggestions.map(s=>`<button class="btn-ghost" style="font-size:11px;padding:5px 13px;border-radius:99px;" onclick="fillChat('${s}')">${s}</button>`).join('')}
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" placeholder="Ask your AI tutor anything...">
+          <button class="btn-primary" style="border-radius:14px;padding:13px 24px;" onclick="sendChat()">Send ↑</button>
+        </div>
+      </div>
+    </div>`;
+}
+function initChat() {
+  const input = document.getElementById('chat-input');
+  if(input) input.addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+}
+function fillChat(text) {
+  const input = document.getElementById('chat-input');
+  if(input) { input.value = text; input.focus(); }
+}
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msgs = document.getElementById('chat-msgs');
+  if(!input||!msgs||!input.value.trim()) return;
+  const q = input.value;
+  input.value = '';
+  msgs.innerHTML += `<div class="msg-row user"><div class="msg-av user">J</div><div class="msg-bubble">${q}</div></div>`;
+  setTimeout(() => {
+    msgs.innerHTML += `<div class="msg-row ai"><div class="msg-av ai">F</div><div class="msg-bubble">Great question! I'm building a personalized response based on your learning path and goals. Check the related module in your dashboard for immediate resources.</div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 600);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// FEEDBACK
+function pageFeedback() {
+  return `
+    <div>
+      <div class="sh"><h1>Feedback</h1><p>Help us improve Fostern. Your voice matters.</p></div>
+      <div style="max-width:560px;">
+        ${card(`
+          <div class="lbl">Rate your experience</div>
+          <div class="stars-row" id="stars-row">
+            ${[1,2,3,4,5].map(n=>`<button class="star-btn" data-n="${n}" onmouseover="hoverStar(${n})" onmouseout="hoverStar(0)" onclick="rateStar(${n})">★</button>`).join('')}
+          </div>
+          <div id="rate-label" style="color:var(--text-sub);font-size:13px;margin-bottom:20px;font-style:italic;min-height:20px;"></div>
+          <div class="lbl">Tell us more</div>
+          <textarea class="feedback-textarea" id="feed-text" placeholder="What can we improve? What do you love?"></textarea>
+          <button class="btn-primary" id="feed-submit" style="width:100%;margin-top:14px;padding:14px;" onclick="submitFeedback()" disabled>Submit Feedback</button>
+        `)}
+      </div>
+    </div>`;
+}
+function initFeedback() { feedRating = 0; }
+function hoverStar(n) {
+  document.querySelectorAll('.star-btn').forEach(b => {
+    const bn = parseInt(b.dataset.n);
+    b.classList.toggle('hov', n>0 && bn<=n);
+  });
+}
+function rateStar(n) {
+  feedRating = n;
+  const labels = ['','Poor','Needs improvement',"It's okay",'Pretty good','Love it ❤️'];
+  document.querySelectorAll('.star-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.n) <= n);
+    b.classList.remove('hov');
+  });
+  document.getElementById('rate-label').textContent = labels[n];
+  checkFeedSubmit();
+}
+function checkFeedSubmit() {
+  const text = document.getElementById('feed-text')?.value?.trim();
+  const btn = document.getElementById('feed-submit');
+  if(btn) btn.disabled = !(text && feedRating > 0);
+}
+function submitFeedback() {
+  const text = document.getElementById('feed-text')?.value?.trim();
+  if(!text || feedRating===0) return;
+  document.querySelector('#content .page').innerHTML = `
+    <div style="text-align:center;padding:80px 0;">
+      <div style="font-size:60px;margin-bottom:16px;">🎉</div>
+      <div style="color:var(--text);font-size:36px;font-weight:800;font-family:'Sora',sans-serif;letter-spacing:-.03em;margin-bottom:12px;">Thank you!</div>
+      <div style="color:var(--text-sub);font-size:14px;margin-bottom:28px;">Your feedback helps us build a better Fostern for every student.</div>
+      <button class="btn-primary" onclick="navigate('feedback')">Submit Another →</button>
+    </div>`;
+}
+
+// COMMUNITY
+function pageCommunity() {
+  const posts = [
+    {name:'Amira K.',loc:'Cameroon',time:'2h',tx:'Just finished the MIT thinking module — the first principles lesson completely changed how I approach every problem.',likes:47,comments:12,av:'A'},
+    {name:'Diego M.',loc:'Brazil',time:'5h',tx:'Sharing my portfolio project from Challenges — I built a water quality monitoring app for my community. Feedback welcome!',likes:93,comments:28,av:'D',badge:true},
+    {name:'Priya S.',loc:'India',time:'1d',tx:"Applied to Chevening using Fostern's guidance. The prep resources here are honestly better than any coaching center.",likes:156,comments:41,av:'P'},
+    {name:'Kwame A.',loc:'Ghana',time:'1d',tx:'Streak hit 30 days! If you\'re struggling with consistency, just start with 10 minutes a day. The AI tutor keeps me on track.',likes:72,comments:19,av:'K'},
+  ];
+  return `
+    <div>
+      <div class="sh"><h1>Community</h1><p>Connect with students from around the world. Share, inspire, grow.</p></div>
+      <div style="max-width:640px;">
+        ${card(`
+          <input class="post-input" placeholder="Share something with the community...">
+          <div class="post-footer">
+            <button class="btn-primary" style="padding:8px 20px;font-size:13px;">Post →</button>
+          </div>
+        `, 'margin-bottom:18px;')}
+        ${posts.map((p,i)=>card(`
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--surface-hov);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:800;font-size:14px;font-family:'Sora',sans-serif;flex-shrink:0;">${p.av}</div>
+            <div>
+              <div style="color:var(--text);font-size:13px;font-weight:700;">${p.name} <span style="color:var(--text-muted);font-size:11px;font-weight:400;">· ${p.loc}</span></div>
+              <div style="color:var(--text-muted);font-size:11px;">${p.time} ago</div>
+            </div>
+          </div>
+          <p style="color:var(--text-sub);font-size:13px;line-height:1.75;margin-bottom:14px;">${p.tx}</p>
+          ${p.badge?`<div style="background:var(--surface-hov);border:1px solid var(--border);border-radius:10px;padding:8px 14px;margin-bottom:14px;color:var(--text-muted);font-size:12px;">📎 Project Attached: Water Quality Monitor v1.0</div>`:''}
+          <div style="display:flex;gap:16px;">
+            <button class="post-action">♡ ${p.likes}</button>
+            <button class="post-action">💬 ${p.comments}</button>
+            <button class="post-action">↗ Share</button>
+          </div>
+        `, 'margin-bottom:12px;')).join('')}
+      </div>
+    </div>`;
+}
+
+// SETTINGS
+function pageSettings() {
+  const fields = [['Full Name','Jamie Chen'],['Email','jamie.chen@email.com'],['Learning Goal','Get into a Top 20 University'],['Language','English']];
+  return `
+    <div>
+      <div class="sh"><h1>Account Settings</h1><p>Manage your profile, preferences, and subscription.</p></div>
+      <div style="max-width:580px;">
+        ${card(`
+          <div class="lbl">Profile</div>
+          <div style="display:flex;align-items:center;gap:18px;margin-bottom:24px;">
+            <div style="width:68px;height:68px;border-radius:50%;background:var(--surface-hov);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:26px;font-weight:800;font-family:'Sora',sans-serif;flex-shrink:0;">J</div>
+            <div>
+              <div style="color:var(--text);font-size:17px;font-weight:700;font-family:'Sora',sans-serif;letter-spacing:-.02em;">Jamie Chen</div>
+              <div style="color:var(--text-muted);font-size:13px;">jamie.chen@email.com</div>
+              <button class="btn-ghost" style="margin-top:8px;padding:4px 12px;font-size:11px;">Change Photo</button>
+            </div>
+          </div>
+          ${fields.map(([l,v])=>`
+            <div class="form-group">
+              <label class="form-label">${l}</label>
+              <input class="form-input" value="${v}">
+            </div>
+          `).join('')}
+          <button class="btn-primary" style="margin-top:8px;">Save Changes</button>
+        `, 'margin-bottom:14px;')}
+        ${card(`
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="lbl">Subscription</div>
+              <div style="color:var(--text-sub);font-size:13px;margin-top:-8px;">Currently on <strong style="color:var(--text)">Free Plan</strong></div>
+            </div>
+            <button class="btn-primary" onclick="showModal()">Upgrade →</button>
+          </div>
+        `, 'margin-bottom:14px;')}
+        ${[
+          ['Privacy Settings',[['Profile visibility','Public'],['Data sharing','Off'],['Analytics','On']]],
+          ['Notifications',[['Email digests','Weekly'],['Streak reminders','On'],['Opportunities','On']]]
+        ].map(([sec,items])=>card(`
+          <div class="lbl">${sec}</div>
+          ${items.map(([k,v],ii)=>`
+            <div style="display:flex;justify-content:space-between;padding:12px 0;${ii<items.length-1?'border-bottom:1px solid var(--border)':''}">
+              <span style="color:var(--text-sub);font-size:13px;">${k}</span>
+              <span style="color:var(--text);font-size:13px;font-weight:700;">${v}</span>
+            </div>
+          `).join('')}
+        `, 'margin-bottom:14px;')).join('')}
+      </div>
+    </div>`;
+}
+
+// Feedback text listener
+document.addEventListener('input', e => {
+  if(e.target.id==='feed-text') checkFeedSubmit();
+});
+</script>
+</body>
+</html>

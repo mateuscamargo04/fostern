@@ -1,0 +1,728 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fostern — Get Started</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="img/png" href="img/Logo.jpeg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+  }
+  @media (max-width: 768px) { body { overflow-y: auto; } }
+ 
+  /* ── SPLIT ── */
+  .split {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    min-height: 100vh;
+  }
+  @media (max-width: 768px) {
+    .split { grid-template-columns: 1fr; }
+    .left { display: none; }
+    body { overflow-y: auto; }
+  }
+ 
+  /* ══════════ LEFT ══════════ */
+  .left {
+    position: relative;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 52px 56px;
+    overflow: hidden;
+  }
+  #bg-canvas { position: absolute; inset: 0; pointer-events: none; }
+ 
+  .amb {
+    position: absolute; border-radius: 50%;
+    pointer-events: none; filter: blur(130px);
+  }
+  .amb1 { width: 480px; height: 480px; background: rgba(255,255,255,0.022); top: -80px; left: -60px; animation: drift1 20s ease-in-out infinite; }
+  .amb2 { width: 320px; height: 320px; background: rgba(255,255,255,0.015); bottom: -40px; right: 20px; animation: drift2 24s ease-in-out infinite; }
+  @keyframes drift1 { 0%,100%{transform:translate(0,0)} 40%{transform:translate(36px,28px)} 70%{transform:translate(-14px,44px)} }
+  @keyframes drift2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-28px,-36px)} }
+ 
+  .left-logo { position: relative; z-index: 2; }
+  .left-logo img { height: 26px; }
+ 
+  .left-body {
+    position: relative; z-index: 2;
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+  }
+ 
+  .step-preview {
+    display: flex; flex-direction: column; gap: 18px;
+    margin-bottom: 52px;
+  }
+  .step-row {
+    display: flex; align-items: center; gap: 16px;
+    opacity: 0.22; transition: opacity 0.5s ease;
+  }
+  .step-row.active { opacity: 1; }
+  .step-row.done { opacity: 0.45; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid #222;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 600; color: #333;
+    flex-shrink: 0;
+    transition: all 0.4s;
+  }
+  .step-row.active .step-num {
+    border-color: #fff; color: #fff;
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.05);
+  }
+  .step-row.done .step-num {
+    background: #fff; border-color: #fff; color: #000;
+  }
+  .step-row.done .step-num::after { content: '✓'; font-size: 0.65rem; }
+  .step-row.done .step-num span { display: none; }
+  .step-info {}
+  .step-label { font-size: 0.82rem; font-weight: 500; color: #fff; }
+  .step-desc { font-size: 0.72rem; color: #3a3a3a; margin-top: 2px; }
+  .step-row.active .step-desc { color: #555; }
+ 
+  .left-headline {
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 700; line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 14px;
+  }
+  .left-headline .dim { display: block; color: rgba(255,255,255,0.2); font-weight: 300; }
+  .left-sub { font-size: 0.82rem; color: #333; font-weight: 400; }
+ 
+  .left-foot { position: relative; z-index: 2; }
+  .trust-row { display: flex; gap: 28px; }
+  .trust-item {}
+  .trust-val { font-size: 1.3rem; font-weight: 600; color: #fff; letter-spacing: -0.02em; display: block; margin-bottom: 3px; }
+  .trust-lbl { font-size: 0.68rem; color: #2e2e2e; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 500; }
+ 
+  /* ══════════ RIGHT ══════════ */
+  .right {
+    background: #040404;
+    border-left: 1px solid #111;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 28px;
+    position: relative;
+  }
+ 
+  .card {
+    width: 100%; max-width: 380px;
+    animation: card-in 0.6s cubic-bezier(0.22,1,0.36,1) 0.08s both;
+  }
+  @keyframes card-in { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+ 
+  /* progress bar */
+  .progress-track {
+    height: 2px; background: #111; border-radius: 1px;
+    margin-bottom: 40px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: #fff; border-radius: 1px;
+    transition: width 0.5s cubic-bezier(0.22,1,0.36,1);
+  }
+ 
+  /* step panels */
+  .step-panel { display: none; }
+  .step-panel.active {
+    display: block;
+    animation: panel-in 0.4s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes panel-in { from { opacity:0; transform:translateX(12px); } to { opacity:1; transform:none; } }
+  .step-panel.exit {
+    animation: panel-out 0.25s ease both;
+  }
+  @keyframes panel-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-10px); } }
+ 
+  .step-badge {
+    display: inline-block;
+    font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #333; margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 1.45rem; font-weight: 700;
+    letter-spacing: -0.025em; color: #fff;
+    margin-bottom: 6px;
+  }
+  .card-sub { font-size: 0.8rem; color: #444; font-weight: 400; margin-bottom: 28px; }
+ 
+  /* Google */
+  .btn-google {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: transparent; border: 1px solid #1c1c1c;
+    color: #888; padding: 11px 16px; border-radius: 9px;
+    font-family: inherit; font-size: 0.83rem; font-weight: 500;
+    cursor: pointer; letter-spacing: 0.005em;
+    transition: border-color .2s, color .2s, transform .18s, box-shadow .2s;
+    margin-bottom: 20px;
+  }
+  .btn-google:hover { border-color: #2c2c2c; color: #ccc; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,255,255,0.025); }
+ 
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background:#121212; }
+  .divider span { font-size: 0.68rem; color: #2a2a2a; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; }
+ 
+  /* inputs */
+  .form-group { margin-bottom: 13px; }
+  .form-label { display: block; font-size: 0.73rem; font-weight: 500; color: #444; margin-bottom: 6px; letter-spacing: 0.02em; }
+  .form-input {
+    width: 100%; background: #0a0a0a; border: 1px solid #181818;
+    color: #fff; padding: 11px 14px; border-radius: 9px;
+    font-family: inherit; font-size: 0.875rem; font-weight: 400;
+    outline: none; transition: border-color .2s, box-shadow .2s, background .2s;
+    -webkit-appearance: none;
+  }
+  .form-input::placeholder { color: #252525; }
+  .form-input:hover { border-color: #222; }
+  .form-input:focus { border-color: rgba(255,255,255,0.45); background: #0d0d0d; box-shadow: 0 0 0 3px rgba(255,255,255,0.035); }
+  input:-webkit-autofill, input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 40px #0d0d0d inset !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+ 
+  /* row inputs */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+ 
+  /* password wrap */
+  .pw-wrap { position: relative; }
+  .pw-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: #2e2e2e;
+    font-family: inherit; font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: pointer; transition: color .2s; padding: 4px;
+  }
+  .pw-toggle:hover { color: #777; }
+ 
+  /* strength bar */
+  .strength-wrap { margin-top: 8px; }
+  .strength-track { height: 2px; background: #141414; border-radius: 1px; overflow: hidden; }
+  .strength-fill { height: 100%; border-radius: 1px; width: 0%; transition: width .35s ease, background .35s; }
+  .strength-label { font-size: 0.68rem; color: #333; margin-top: 5px; transition: color .35s; }
+ 
+  /* select */
+  .form-select {
+    width: 100%; background: #0a0a0a; border: 1px solid #181818;
+    color: #fff; padding: 11px 14px; border-radius: 9px;
+    font-family: inherit; font-size: 0.875rem; font-weight: 400;
+    outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23333' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .form-select:focus { border-color: rgba(255,255,255,0.45); box-shadow: 0 0 0 3px rgba(255,255,255,0.035); }
+  .form-select option { background: #111; }
+ 
+  /* goal chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .chip {
+    padding: 7px 14px; border-radius: 100px;
+    border: 1px solid #1c1c1c;
+    font-size: 0.75rem; font-weight: 500; color: #444;
+    cursor: pointer; transition: all .18s; background: transparent;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: #2e2e2e; color: #888; }
+  .chip.selected { border-color: #fff; color: #fff; background: rgba(255,255,255,0.04); }
+ 
+  /* terms */
+  .terms-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 20px; margin-top: 6px;
+  }
+  .terms-row input[type=checkbox] {
+    -webkit-appearance: none; appearance: none;
+    width: 15px; height: 15px; flex-shrink: 0;
+    border: 1px solid #222; border-radius: 4px;
+    background: #0a0a0a; cursor: pointer; margin-top: 1px;
+    position: relative; transition: all .18s;
+  }
+  .terms-row input[type=checkbox]:checked { background: #fff; border-color: #fff; }
+  .terms-row input[type=checkbox]:checked::after {
+    content: ''; position: absolute;
+    top: 2px; left: 4px; width: 4px; height: 7px;
+    border: 1.5px solid #000; border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .terms-text { font-size: 0.75rem; color: #333; line-height: 1.6; }
+  .terms-text a { color: #666; text-decoration: none; border-bottom: 1px solid #222; transition: color .2s; }
+  .terms-text a:hover { color: #aaa; }
+ 
+  /* nav */
+  .step-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; }
+  .btn-back {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; color: #2e2e2e;
+    font-family: inherit; font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; transition: color .2s; padding: 0;
+  }
+  .btn-back:hover { color: #666; }
+  .btn-back svg { transition: transform .2s; }
+  .btn-back:hover svg { transform: translateX(-2px); }
+ 
+  /* primary action */
+  .btn-next, .btn-submit {
+    background: #fff; color: #000; border: none;
+    padding: 11px 28px; border-radius: 9px;
+    font-family: inherit; font-size: 0.875rem; font-weight: 600;
+    cursor: pointer; letter-spacing: -0.01em;
+    transition: transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-next:hover, .btn-submit:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 6px 24px rgba(255,255,255,0.1);
+  }
+  .btn-next:active, .btn-submit:active { transform: scale(0.99); box-shadow: none; }
+  .btn-next-full { width: 100%; justify-content: center; margin-bottom: 0; }
+ 
+  /* arrow */
+  .btn-arrow {
+    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.1); border-radius: 50%;
+    flex-shrink: 0;
+  }
+ 
+  /* success screen */
+  .success-screen { text-align: center; padding: 16px 0; }
+  .check-circle {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: #fff; margin: 0 auto 28px;
+    display: flex; align-items: center; justify-content: center;
+    animation: pop-in .5s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes pop-in { from{transform:scale(0.4);opacity:0} to{transform:scale(1);opacity:1} }
+  .check-circle svg { width: 28px; height: 28px; }
+  .success-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 10px; }
+  .success-sub { font-size: 0.82rem; color: #444; line-height: 1.6; margin-bottom: 36px; }
+  .btn-dashboard {
+    width: 100%; background: #fff; color: #000; border: none;
+    padding: 13px; border-radius: 9px; font-family: inherit;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    transition: transform .18s, box-shadow .18s;
+    margin-bottom: 14px;
+  }
+  .btn-dashboard:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,255,255,0.1); }
+ 
+  /* login link */
+  .login-link {
+    text-align: center; font-size: 0.78rem; color: #2e2e2e;
+    margin-top: 20px;
+  }
+  .login-link a { color: #666; text-decoration: none; font-weight: 500; border-bottom: 1px solid transparent; padding-bottom: 1px; transition: color .2s, border-color .2s; }
+  .login-link a:hover { color: #fff; border-bottom-color: #333; }
+ 
+  /* mobile logo */
+  .mobile-logo { display: none; text-align: center; margin-bottom: 40px; }
+  .mobile-logo img { height: 24px; }
+  @media (max-width: 768px) { .mobile-logo { display: block; } }
+ 
+  body { animation: fade-in .35s ease both; }
+  @keyframes fade-in { from{opacity:0} to{opacity:1} }
+</style>
+</head>
+<body>
+<div class="split">
+ 
+  <!-- ══════════ LEFT ══════════ -->
+  <div class="left">
+    
+ 
+    <div class="left-logo"><img src="img/Fostern.jpeg"></div>
+ 
+    <div class="left-body">
+      <div class="left-headline">
+        Build your future.<br>
+        <span class="dim">Start here.</span>
+      </div>
+      <p class="left-sub" style="margin-bottom:52px;">Three steps. Less than two minutes.</p>
+ 
+      <div class="step-preview" id="left-steps">
+        <div class="step-row active" id="ls-1">
+          <div class="step-num"><span>1</span></div>
+          <div class="step-info">
+            <div class="step-label">Create your account</div>
+            <div class="step-desc">Email, name and a secure password</div>
+          </div>
+        </div>
+        <div class="step-row" id="ls-2">
+          <div class="step-num"><span>2</span></div>
+          <div class="step-info">
+            <div class="step-label">Tell us about you</div>
+            <div class="step-desc">Country, study level and target year</div>
+          </div>
+        </div>
+        <div class="step-row" id="ls-3">
+          <div class="step-num"><span>3</span></div>
+          <div class="step-info">
+            <div class="step-label">Define your goals</div>
+            <div class="step-desc">What do you want to achieve?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <div class="left-foot">
+      <div class="trust-row">
+        <div class="trust-item"><span class="trust-val">12k+</span><span class="trust-lbl">Students</span></div>
+        <div class="trust-item"><span class="trust-val">2,400+</span><span class="trust-lbl">Universities</span></div>
+        <div class="trust-item"><span class="trust-val">94%</span><span class="trust-lbl">Accuracy</span></div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ══════════ RIGHT ══════════ -->
+  <div class="right">
+    <div class="card">
+      <div class="mobile-logo"><img src="logo.png" alt="logo"/></div>
+ 
+      <!-- progress -->
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:33%"></div>
+      </div>
+ 
+      <!-- ── STEP 1 ── -->
+      <div class="step-panel active" id="step-1">
+        <span class="step-badge">Step 1 of 3</span>
+        <h2 class="card-title">Create your account</h2>
+        <p class="card-sub">Start free. No credit card required.</p>
+ 
+        <button class="btn-google">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        <div class="divider"><span>or</span></div>
+ 
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="fname">First name</label>
+            <input class="form-input" type="text" id="fname" placeholder="Alex"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lname">Last name</label>
+            <input class="form-input" type="text" id="lname" placeholder="Silva"/>
+          </div>
+        </div>
+ 
+        <div class="form-group">
+          <label class="form-label" for="email">Email address</label>
+          <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+ 
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="pw-wrap">
+            <input class="form-input" type="password" id="password" placeholder="Min. 8 characters" style="padding-right:52px;" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+            <button class="pw-toggle" id="pw-btn" onclick="togglePw()">Show</button>
+          </div>
+          <div class="strength-wrap">
+            <div class="strength-track"><div class="strength-fill" id="str-fill"></div></div>
+            <div class="strength-label" id="str-label"></div>
+          </div>
+        </div>
+ 
+        <div class="terms-row">
+          <input type="checkbox" id="terms"/>
+          <label class="terms-text" for="terms">
+            I agree to Fostern's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </label>
+        </div>
+ 
+        <button class="btn-next btn-next-full" onclick="goTo(2)">
+          Continue
+          <span class="btn-arrow">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5.5 2l3 3-3 3" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+ 
+        <p class="login-link">Already have an account? <a href="login.html">Log in</a></p>
+      </div>
+ 
+      <!-- ── STEP 2 ── -->
+      <div class="step-panel" id="step-2">
+        <span class="step-badge">Step 2 of 3</span>
+        <h2 class="card-title">Tell us about you</h2>
+        <p class="card-sub">We'll personalize your experience from day one.</p>
+ 
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select class="form-select" id="country">
+            <option value="" disabled selected>Select your country</option>
+            <option>Brazil</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>India</option>
+            <option>Nigeria</option>
+            <option>Germany</option>
+            <option>Portugal</option>
+            <option>Mexico</option>
+            <option>China</option>
+            <option>South Korea</option>
+            <option>Other</option>
+          </select>
+        </div>
+ 
+        <div class="form-group">
+          <label class="form-label">Current study level</label>
+          <select class="form-select" id="level">
+            <option value="" disabled selected>Select level</option>
+            <option>High school (Year 9–10)</option>
+            <option>High school (Year 11–12)</option>
+            <option>Gap year</option>
+            <option>Undergraduate</option>
+            <option>Working professional</option>
+          </select>
+        </div>
+ 
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Target entry year</label>
+            <select class="form-select" id="year">
+              <option value="" disabled selected>Year</option>
+              <option>2025</option>
+              <option>2026</option>
+              <option>2027</option>
+              <option>2028</option>
+              <option>2029+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Degree type</label>
+            <select class="form-select" id="degree">
+              <option value="" disabled selected>Type</option>
+              <option>Bachelor's</option>
+              <option>Master's</option>
+              <option>MBA</option>
+              <option>PhD</option>
+            </select>
+          </div>
+        </div>
+ 
+        <div class="form-group">
+          <label class="form-label">Intended field of study</label>
+          <input class="form-input" type="text" id="field" placeholder="e.g. Computer Science, Business, Law…"/>
+        </div>
+ 
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(1)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back
+          </button>
+          <button class="btn-next" onclick="goTo(3)">
+            Continue
+            <span class="btn-arrow">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5.5 2l3 3-3 3" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+        </div>
+      </div>
+ 
+      <!-- ── STEP 3 ── -->
+      <div class="step-panel" id="step-3">
+        <span class="step-badge">Step 3 of 3</span>
+        <h2 class="card-title">Define your goals</h2>
+        <p class="card-sub">Select everything that applies. We'll tailor your path.</p>
+ 
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" style="margin-bottom:10px;">What do you want to achieve?</label>
+          <div class="chips" id="goal-chips">
+            <button class="chip" onclick="toggleChip(this)">Admission simulation</button>
+            <button class="chip" onclick="toggleChip(this)">SAT preparation</button>
+            <button class="chip" onclick="toggleChip(this)">TOEFL readiness</button>
+            <button class="chip" onclick="toggleChip(this)">Find scholarships</button>
+            <button class="chip" onclick="toggleChip(this)">University ranking</button>
+            <button class="chip" onclick="toggleChip(this)">Study plan</button>
+            <button class="chip" onclick="toggleChip(this)">Application timeline</button>
+            <button class="chip" onclick="toggleChip(this)">Essay support</button>
+          </div>
+        </div>
+ 
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" style="margin-bottom:10px;">Where are you aiming?</label>
+          <div class="chips">
+            <button class="chip" onclick="toggleChip(this)">Ivy League</button>
+            <button class="chip" onclick="toggleChip(this)">Top 50 global</button>
+            <button class="chip" onclick="toggleChip(this)">Top 100 global</button>
+            <button class="chip" onclick="toggleChip(this)">Regional excellence</button>
+            <button class="chip" onclick="toggleChip(this)">Best scholarship fit</button>
+          </div>
+        </div>
+ 
+        <div class="form-group">
+          <label class="form-label">How did you hear about Fostern?</label>
+          <select class="form-select">
+            <option value="" disabled selected>Select source</option>
+            <option>Social media</option>
+            <option>Friend or peer</option>
+            <option>Google search</option>
+            <option>School / teacher</option>
+            <option>YouTube</option>
+            <option>Other</option>
+          </select>
+        </div>
+ 
+        <div class="step-nav" style="margin-top:28px;">
+          <button class="btn-back" onclick="goTo(2)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 2L3.5 6L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back
+          </button>
+          <button class="btn-submit" onclick="goTo(4)">
+            Launch Fostern
+            <span class="btn-arrow" style="background:rgba(0,0,0,0.08);">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5h6M5.5 2l3 3-3 3" stroke="#000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>
+        </div>
+      </div>
+ 
+      <!-- ── SUCCESS ── -->
+      <div class="step-panel" id="step-4">
+        <div class="success-screen">
+          <div class="check-circle">
+            <svg viewBox="0 0 28 28" fill="none"><path d="M6 14l6 6 10-12" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="success-title">You're in.</h2>
+          <p class="success-sub">Your account is ready.<br>Your future starts now.</p>
+          <button class="btn-dashboard">Go to dashboard →</button>
+          <div style="text-align:center;">
+            <a href="#" style="font-size:0.75rem;color:#2a2a2a;text-decoration:none;border-bottom:1px solid #1a1a1a;padding-bottom:1px;transition:color .2s;" onmouseover="this.style.color='#666'" onmouseout="this.style.color='#2a2a2a'">Explore features first</a>
+          </div>
+        </div>
+      </div>
+ 
+    </div><!-- /card -->
+  </div><!-- /right -->
+</div><!-- /split -->
+ 
+<script>
+// ── STEP NAVIGATION ──────────────────────────────────────────────
+const PROGRESS = { 1:33, 2:66, 3:90, 4:100 };
+let current = 1;
+ 
+function goTo(n) {
+  const from = document.getElementById('step-' + current);
+  from.classList.remove('active');
+  from.classList.add('exit');
+  setTimeout(() => from.classList.remove('exit'), 260);
+ 
+  current = n;
+  const to = document.getElementById('step-' + n);
+  to.classList.add('active');
+ 
+  document.getElementById('progress-fill').style.width = PROGRESS[n] + '%';
+  updateLeftSteps(n);
+}
+ 
+function updateLeftSteps(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('ls-' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+ 
+// ── PASSWORD TOGGLE ───────────────────────────────────────────────
+function togglePw() {
+  const inp = document.getElementById('password');
+  const btn = document.getElementById('pw-btn');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Hide' : 'Show';
+}
+ 
+// ── PASSWORD STRENGTH ─────────────────────────────────────────────
+function checkStrength(val) {
+  const fill = document.getElementById('str-fill');
+  const label = document.getElementById('str-label');
+  if (!val) { fill.style.width = '0%'; label.textContent = ''; return; }
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const map = [
+    { w:'20%', c:'#3a3a3a', t:'' },
+    { w:'30%', c:'#555', t:'Weak' },
+    { w:'55%', c:'#888', t:'Fair' },
+    { w:'80%', c:'#aaa', t:'Good' },
+    { w:'100%', c:'#fff', t:'Strong' },
+  ];
+  const s = map[score];
+  fill.style.width = s.w;
+  fill.style.background = s.c;
+  label.style.color = s.c;
+  label.textContent = s.t;
+}
+ 
+// ── CHIP TOGGLE ───────────────────────────────────────────────────
+function toggleChip(el) { el.classList.toggle('selected'); }
+ 
+// ── PARTICLE CANVAS ───────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('bg-canvas');
+  const cx = cv.getContext('2d');
+  let W, H, pts = [];
+  const N = 50;
+ 
+  function resize() { W = cv.width = cv.offsetWidth; H = cv.height = cv.offsetHeight; }
+  resize();
+  window.addEventListener('resize', () => { resize(); init(); });
+ 
+  function P() {
+    this.x = Math.random()*W; this.y = Math.random()*H;
+    this.vx = (Math.random()-.5)*.16; this.vy = (Math.random()-.5)*.16;
+    this.r = Math.random()*.85+.25; this.a = Math.random()*.3+.06;
+  }
+  function init() { pts = Array.from({length:N},()=>new P()); }
+  init();
+ 
+  function tick() {
+    cx.clearRect(0,0,W,H);
+    pts.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      cx.fillStyle=`rgba(255,255,255,${p.a})`; cx.fill();
+    });
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){ cx.beginPath(); cx.moveTo(pts[i].x,pts[i].y); cx.lineTo(pts[j].x,pts[j].y);
+        cx.strokeStyle=`rgba(255,255,255,${.035*(1-d/110)})`; cx.lineWidth=.5; cx.stroke(); }
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+ 
+// ── INPUT FOCUS LIFT ─────────────────────────────────────────────
+document.querySelectorAll('.form-input, .form-select').forEach(el => {
+  el.addEventListener('focus', () => { el.parentElement.style.transform='translateY(-1px)'; el.parentElement.style.transition='transform .2s'; });
+  el.addEventListener('blur',  () => { el.parentElement.style.transform=''; });
+});
+</script>
+</body>
+</html>
+ 
