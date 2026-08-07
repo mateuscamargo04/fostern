@@ -60,6 +60,51 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
+const plans = [
+  {
+    name: "Gratuito",
+    price: "R$0",
+    period: "",
+    description: "Pra começar a organizar sua jornada.",
+    features: ["Diagnóstico inicial de perfil", "Roadmap básico", "Acesso ao Caderno Fostern"],
+    cta: "Começar grátis",
+    highlight: false
+  },
+  {
+    name: "Mensal",
+    price: "R$24,90",
+    period: "/mês",
+    description: "Acesso completo, mês a mês.",
+    features: ["Tudo do plano Gratuito", "Mentoria individual", "IA de acompanhamento contínuo", "Revisão de redações e projetos"],
+    cta: "Assinar mensal",
+    highlight: true
+  },
+  {
+    name: "Anual",
+    price: "R$199",
+    period: "/ano",
+    description: "O mesmo acesso completo, com desconto.",
+    features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria"],
+    cta: "Assinar anual",
+    highlight: false
+  }
+];
+
+function PillarIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="#D4AF37" strokeWidth="1.4" strokeLinecap="square" strokeLinejoin="round">
+      {children}
+    </svg>
+  );
+}
+
+const pillars = [
+  { term: "Profundidade acadêmica", icon: <PillarIcon><path d="M12 6.2c-1.7-1.1-4-1.6-6.4-1.6v13.2c2.4 0 4.7.5 6.4 1.6M12 6.2c1.7-1.1 4-1.6 6.4-1.6v13.2c-2.4 0-4.7.5-6.4 1.6M12 6.2v13.2" /></PillarIcon> },
+  { term: "Trabalho autoral", icon: <PillarIcon><path d="M5 19.2 6 15l9.6-9.6a2 2 0 0 1 2.8 0l.2.2a2 2 0 0 1 0 2.8L9 18l-4.2 1.2Z" /></PillarIcon> },
+  { term: "Escolhas coerentes", icon: <PillarIcon><circle cx="12" cy="12" r="7.2" /><circle cx="12" cy="12" r="1.4" fill="#D4AF37" stroke="none" /></PillarIcon> },
+  { term: "Escrita com verdade", icon: <PillarIcon><path d="M5 12.5 9.5 17 19 6.2" /></PillarIcon> }
+];
+
 function Reveal({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.16 });
@@ -121,6 +166,7 @@ function Header() {
           <Link className="nav-link text-[10px] font-semibold" href="#mentoria">Mentoria</Link>
           <Link className="nav-link text-[10px] font-semibold" href="#universidades">Universidades</Link>
           <Link className="nav-link text-[10px] font-semibold" href="#familias">Para famílias</Link>
+          <Link className="nav-link text-[10px] font-semibold" href="#planos">Planos</Link>
           <PrimaryLink href="#conversa">Conheça a Fostern</PrimaryLink>
         </nav>
         <button type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open} className="grid h-11 w-11 place-items-center border border-white/25 lg:hidden">
@@ -134,7 +180,7 @@ function Header() {
         {open && (
           <motion.nav initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.24 }} aria-label="Navegação móvel" className="border-t border-white/10 bg-navy px-5 pb-8 pt-3 text-ivory lg:hidden">
             <div className="mx-auto flex max-w-md flex-col">
-              {[['Método', '#metodo'], ['Mentoria', '#mentoria'], ['Universidades', '#universidades'], ['Para famílias', '#familias']].map(([label, href]) => <Link key={href} onClick={close} href={href} className="border-b border-white/10 py-4 text-sm font-medium">{label}</Link>)}
+              {[['Método', '#metodo'], ['Mentoria', '#mentoria'], ['Universidades', '#universidades'], ['Para famílias', '#familias'], ['Planos', '#planos']].map(([label, href]) => <Link key={href} onClick={close} href={href} className="border-b border-white/10 py-4 text-sm font-medium">{label}</Link>)}
               <Link onClick={close} href="#conversa" className="mt-6 bg-gold px-5 py-4 text-center text-xs font-bold text-navy">Conheça a Fostern</Link>
             </div>
           </motion.nav>
@@ -148,26 +194,26 @@ function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", reduced ? "0%" : "14%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", reduced ? "0%" : "-8%"]);
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", reduced ? "0%" : "6%"]);
 
   return (
-    <section ref={ref} id="inicio" className="grain relative flex min-h-[850px] overflow-hidden bg-navy text-ivory md:min-h-[110svh]">
-      <motion.div initial={{ opacity: 0, scale: 1.075 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.45, ease: [0.22, 1, .36, 1] }} style={{ y: imageY }} className="absolute inset-x-0 top-0 h-[114%]">
-        <Image src={campusImages.mit} alt="Great Dome do MIT, em Cambridge" fill priority sizes="100vw" className="object-cover object-[59%_center] brightness-[.73] saturate-[.67]" />
+    <section ref={ref} id="inicio" className="grain relative flex min-h-[680px] overflow-hidden bg-navy text-ivory md:min-h-[94svh]">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.3, ease: [0.22, 1, .36, 1] }} style={{ y: imageY }} className="absolute inset-0">
+        <Image src={campusImages.mit} alt="Great Dome do MIT, em Cambridge, cercado por árvores" fill priority sizes="100vw" className="object-cover object-[68%_42%] brightness-[.98] saturate-[1.03]" />
       </motion.div>
-      <div className="absolute inset-0 bg-navy/57" />
-      <div className="absolute inset-y-0 left-0 w-full bg-navy/42 md:w-[54%]" />
-      <motion.div style={{ y: textY }} className="relative z-10 mx-auto flex w-[min(100%-40px,1280px)] flex-col justify-center pb-24 pt-40 md:w-[min(100%-80px,1320px)] md:pb-28 md:pt-40">
-        <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .72, delay: .17 }} className="mb-8 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional, feita com profundidade.</motion.p>
-        <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: .25, ease: [0.22, 1, .36, 1] }} className="max-w-[690px] font-serif text-[clamp(3.5rem,6.9vw,6.7rem)] leading-[.89] tracking-[-.055em]">Ambição merece<br />um plano <em className="not-italic text-gold">à altura.</em></motion.h1>
-        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .72, delay: .48 }} className="mt-8 max-w-[360px] text-[13px] leading-6 text-ivory/80">Para estudantes brasileiros prontos para construir uma trajetória internacional com profundidade.</motion.p>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .72, delay: .59 }} className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
-          <PrimaryLink href="#conversa">Conheça a Fostern</PrimaryLink>
-          <TextLink href="#metodo" light>Entenda o método</TextLink>
+      <div aria-hidden className="pointer-events-none absolute -left-[20%] top-1/2 h-[125%] w-[70%] -translate-y-1/2 rounded-[50%] bg-navy/88 blur-[95px] md:-left-[10%] md:h-[135%] md:w-[58%] md:blur-[120px]" />
+      <div className="relative z-10 mx-auto flex w-[min(100%-40px,1280px)] flex-col justify-center pb-20 pt-36 md:w-[min(100%-80px,1320px)] md:pb-24 md:pt-40">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .9, delay: .25, ease: [0.22, 1, .36, 1] }}>
+          <p className="mb-8 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional, feita com profundidade.</p>
+          <h1 className="max-w-[560px] font-serif text-[clamp(3rem,5.6vw,5.4rem)] leading-[.93] tracking-[-.05em]">Ambição merece<br />um plano <em className="not-italic text-gold">à altura.</em></h1>
+          <p className="mt-8 max-w-[380px] text-[13px] leading-6 text-ivory/80">Para estudantes brasileiros prontos para construir uma trajetória internacional com profundidade.</p>
+          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
+            <PrimaryLink href="#conversa">Conheça a Fostern</PrimaryLink>
+            <TextLink href="#metodo" light>Entenda o método</TextLink>
+          </div>
+          <p className="mt-14 text-[9px] font-bold uppercase tracking-[.13em] text-ivory/60">Brasil · pensamento com alcance global</p>
         </motion.div>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .8, delay: .77 }} className="absolute bottom-8 text-[9px] font-bold uppercase tracking-[.13em] text-ivory/60 md:bottom-11">Brasil · pensamento com alcance global</motion.p>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -224,22 +270,31 @@ function Roadmap() {
 
 function UniversityWordmarks() {
   const marks = [
-    ["MIT", "font-sans text-[21px] font-bold tracking-[-.1em]"],
-    ["Stanford", "font-serif text-[21px] tracking-[-.04em]"],
-    ["HARVARD", "font-serif text-[18px] font-semibold tracking-[.08em]"],
-    ["Oxford", "font-serif text-[23px] tracking-[-.04em]"],
-    ["CAMBRIDGE", "font-serif text-[16px] font-semibold tracking-[.09em]"],
-    ["ETH Zürich", "font-sans text-[16px] font-semibold tracking-[-.05em]"],
-    ["Princeton", "font-serif text-[20px] tracking-[-.04em]"],
-    ["Caltech", "font-sans text-[19px] font-bold tracking-[-.07em]"]
+    { name: "MIT", src: "https://commons.wikimedia.org/wiki/Special:FilePath/MIT_logo_2003-2023.svg?width=300" },
+    { name: "Stanford", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Seal_of_Leland_Stanford_Junior_University.svg?width=200" },
+    { name: "Harvard", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Harvard_University_coat_of_arms.svg?width=200" },
+    { name: "Oxford", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Coat_of_arms_of_the_University_of_Oxford.svg?width=200" },
+    { name: "Cambridge", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Coat_of_Arms_of_the_University_of_Cambridge.svg?width=200" },
+    { name: "ETH Zürich", src: "https://commons.wikimedia.org/wiki/Special:FilePath/ETH_Z%C3%BCrich_Logo_black.svg?width=300" },
+    { name: "Princeton", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Princeton_University_Shield.svg?width=200" },
+    { name: "Caltech", src: "https://commons.wikimedia.org/wiki/Special:FilePath/Caltech_Logo.svg?width=300" }
   ];
 
   return (
     <section aria-label="Universidades de referência" className="border-b border-graphite/15 bg-ivory">
       <div className="mx-auto flex min-h-[148px] w-[min(100%-40px,1280px)] flex-col justify-center py-8 md:w-[min(100%-80px,1320px)] md:py-0">
         <p className="mb-6 text-[9px] font-bold uppercase tracking-[.14em] text-graphite/55 md:mb-7">Universidades de referência</p>
-        <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-5 text-navy/72 md:gap-x-9">
-          {marks.map(([name, classes]) => <span key={name} className={`${classes} cursor-default transition duration-500 hover:scale-[1.04] hover:text-navy`}>{name}</span>)}
+        <div className="flex flex-wrap items-center justify-between gap-x-9 gap-y-6">
+          {marks.map(({ name, src }) => (
+            <div key={name} className="flex flex-col items-center gap-2.5">
+              <img
+                src={src}
+                alt={name}
+                className="h-7 w-auto object-contain opacity-70 grayscale transition duration-500 hover:opacity-100 hover:grayscale-0 md:h-8"
+              />
+              <span className="text-[8px] font-bold uppercase tracking-[.12em] text-graphite/55">{name}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -309,7 +364,7 @@ export function FosternLanding() {
         <Method />
         <Roadmap />
 
-        <section className="bg-navy py-28 text-ivory md:py-36"><Reveal className="mx-auto w-[min(100%-40px,1280px)] md:w-[min(100%-80px,1320px)]"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">O que importa</p><h2 className="mt-5 max-w-5xl font-serif text-[clamp(3rem,5.3vw,5.7rem)] leading-[.91] tracking-[-.05em]">Universidades seletivas procuram <em className="not-italic text-gold">evidência,</em> não aparência.</h2><div className="ml-auto mt-12 grid max-w-[780px] gap-7 md:grid-cols-2 md:gap-16"><p className="text-[13px] leading-7 text-ivory/80">Uma candidatura forte não é construída com atividades aleatórias, certificados acumulados ou uma narrativa inventada no último ano.</p><p className="text-[13px] leading-7 text-ivory/80">Ela revela curiosidade, consistência, iniciativa e capacidade de contribuir.</p></div><div className="mt-20 grid border-y border-ivory/20 sm:grid-cols-2 md:grid-cols-4">{['Profundidade acadêmica', 'Trabalho autoral', 'Escolhas coerentes', 'Escrita com verdade'].map((term, index) => <p key={term} className={`py-5 font-serif text-[20px] text-ivory/85 ${index > 0 ? 'sm:border-l sm:border-ivory/20 sm:pl-5' : ''}`}>{term}</p>)}</div></Reveal></section>
+        <section className="bg-navy py-28 text-ivory md:py-36"><Reveal className="mx-auto w-[min(100%-40px,1280px)] md:w-[min(100%-80px,1320px)]"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">O que importa</p><h2 className="mt-5 max-w-5xl font-serif text-[clamp(3rem,5.3vw,5.7rem)] leading-[.91] tracking-[-.05em]">Universidades seletivas procuram <em className="not-italic text-gold">evidência,</em> não aparência.</h2><div className="ml-auto mt-12 grid max-w-[780px] gap-7 md:grid-cols-2 md:gap-16"><p className="text-[13px] leading-7 text-ivory/80">Uma candidatura forte não é construída com atividades aleatórias, certificados acumulados ou uma narrativa inventada no último ano.</p><p className="text-[13px] leading-7 text-ivory/80">Ela revela curiosidade, consistência, iniciativa e capacidade de contribuir.</p></div><div className="mt-20 grid border-y border-ivory/20 sm:grid-cols-2 md:grid-cols-4">{pillars.map(({ term, icon }, index) => <div key={term} className={`flex items-center gap-3 py-5 ${index > 0 ? 'sm:border-l sm:border-ivory/20 sm:pl-5' : ''}`}>{icon}<p className="font-serif text-[20px] text-ivory/85">{term}</p></div>)}</div></Reveal></section>
 
         <section id="mentoria" className="bg-ivory py-24 md:py-36"><div className="mx-auto grid w-[min(100%-40px,1280px)] items-center gap-14 md:w-[min(100%-80px,1320px)] md:grid-cols-[1.1fr_.9fr] md:gap-[clamp(60px,10vw,170px)]"><Reveal className="relative aspect-[.9] overflow-hidden bg-navy md:aspect-[.98]"><Image src={campusImages.oxford} alt="Radcliffe Camera, Oxford" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover saturate-[.64] brightness-[.79]" /><div className="absolute inset-0 bg-navy/26" /><p className="absolute bottom-6 right-6 max-w-[160px] text-right text-[10px] leading-4 text-ivory">Boa orientação deixa rastros no trabalho.</p></Reveal><Reveal delay={.12}><p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Mentoria</p><h2 className="mt-3 font-serif text-[clamp(2.8rem,4.6vw,4.8rem)] leading-[.93] tracking-[-.045em] text-navy">Orientação que respeita a inteligência do <em className="not-italic text-deep-navy">estudante.</em></h2><p className="mt-7 text-[13px] leading-7 text-graphite/80">Estratégia é importante. Mas o que muda a qualidade de um trabalho são boas perguntas, critérios altos, retorno direto e continuidade.</p><p className="mt-4 text-[13px] leading-7 text-graphite/80">Cada conversa deixa algo concreto: uma decisão mais clara, uma hipótese melhor, um plano revisado ou uma pergunta que vale perseguir.</p><div className="mt-8"><TextLink href="#conversa">Como funciona a mentoria</TextLink></div></Reveal></div></section>
 
@@ -322,6 +377,40 @@ export function FosternLanding() {
         <section id="familias" className="bg-mist py-24 md:py-32"><Reveal className="mx-auto grid w-[min(100%-40px,1100px)] gap-7 md:w-[min(100%-80px,1100px)] md:grid-cols-[25%_1fr]"><div><p className="font-serif text-xl text-gold">02</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Para famílias</p></div><div><h2 className="font-serif text-[clamp(2.7rem,4.4vw,4.5rem)] leading-[.95] tracking-[-.045em] text-navy">Apoiar sem assumir<br />o lugar do <em className="not-italic text-deep-navy">estudante.</em></h2><p className="mt-7 max-w-[610px] text-[13px] leading-7 text-graphite/80">Aplicar para universidades internacionais envolve escolhas importantes, prazos, expectativas e investimento emocional. A Fostern dá visibilidade ao processo e orientação para que a família apoie com clareza—preservando a autonomia de quem está construindo o próprio futuro.</p><div className="mt-7"><TextLink href="#conversa">Entenda o papel da família</TextLink></div></div></Reveal></section>
 
         <section className="bg-ivory py-24 md:py-36"><Reveal className="mx-auto grid w-[min(100%-40px,1280px)] gap-8 md:w-[min(100%-80px,1320px)] md:grid-cols-[25%_1fr]"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Caderno Fostern</p><article className="border-l border-graphite/20 pl-0 md:pl-10"><p className="text-[9px] font-bold tracking-[.12em] text-graphite/60">NOTA DE ORIENTAÇÃO — 08 MIN DE LEITURA</p><h2 className="mt-6 max-w-4xl font-serif text-[clamp(2.7rem,4.4vw,4.6rem)] leading-[.96] tracking-[-.045em] text-navy">A pergunta certa não é “qual universidade devo escolher?”</h2><p className="mt-5 max-w-xl text-[14px] leading-6 text-graphite/75">É “que tipo de trabalho quero que minha candidatura torne visível?”</p><div className="mt-7"><TextLink href="#conversa">Ler a nota</TextLink></div></article></Reveal></section>
+
+        <section id="planos" className="bg-mist py-24 md:py-36">
+          <div className="mx-auto w-[min(100%-40px,1280px)] md:w-[min(100%-80px,1320px)]">
+            <Reveal className="grid gap-6 pb-14 md:grid-cols-[25%_1fr]">
+              <p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Planos</p>
+              <div>
+                <h2 className="max-w-3xl font-serif text-[clamp(2.8rem,5vw,5rem)] leading-[.94] tracking-[-.045em] text-navy">Escolha o ritmo <em className="not-italic text-deep-navy">certo pra você.</em></h2>
+                <p className="mt-4 text-[9px] font-bold uppercase tracking-[.1em] text-gold">Exemplo — recursos de cada plano ainda em definição</p>
+              </div>
+            </Reveal>
+            <div className="grid gap-6 md:grid-cols-3">
+              {plans.map((plan, index) => (
+                <Reveal key={plan.name} delay={index * .08} className={`flex flex-col border p-8 ${plan.highlight ? "border-navy bg-navy text-ivory" : "border-graphite/20 bg-ivory text-navy"}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-[.14em] ${plan.highlight ? "text-gold" : "text-deep-navy"}`}>{plan.name}</p>
+                  <div className="mt-5 flex items-baseline gap-1.5">
+                    <span className="font-serif text-[40px] leading-none tracking-[-.03em]">{plan.price}</span>
+                    {plan.period && <span className={`text-[12px] ${plan.highlight ? "text-ivory/70" : "text-graphite/60"}`}>{plan.period}</span>}
+                  </div>
+                  <p className={`mt-3 text-[12px] leading-5 ${plan.highlight ? "text-ivory/75" : "text-graphite/70"}`}>{plan.description}</p>
+                  <ul className="mt-7 flex-1 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className={`flex items-start gap-2.5 text-[12px] leading-5 ${plan.highlight ? "text-ivory/85" : "text-graphite/80"}`}>
+                        <span className="mt-[3px] text-gold">＋</span>{feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-8">
+                    <PrimaryLink href="#conversa" light={plan.highlight}>{plan.cta}</PrimaryLink>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section id="conversa" className="grain relative overflow-hidden bg-deep-navy py-28 text-ivory md:py-36"><div className="pointer-events-none absolute right-[8%] top-0 h-[380px] w-[380px] rounded-full border border-ivory/20" /><div className="pointer-events-none absolute right-[13%] top-[44px] h-[290px] w-[290px] rounded-full border border-ivory/15" /><Reveal className="relative mx-auto max-w-[770px] px-5 text-center md:px-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">O próximo passo</p><h2 className="mt-5 font-serif text-[clamp(3rem,5.4vw,5.5rem)] leading-[.92] tracking-[-.05em]">Comece com uma conversa honesta sobre o que é possível <em className="not-italic text-gold">construir.</em></h2><p className="mx-auto mt-6 max-w-lg text-[13px] leading-7 text-ivory/80">Não é preciso ter tudo resolvido para começar. É preciso estar disposto a olhar com seriedade para o próximo passo.</p><ConversationForm /><p className="mx-auto mt-6 max-w-md text-[9px] leading-5 text-ivory/60">Para estudantes e famílias em busca de orientação internacional com profundidade.</p></Reveal></section>
       </main>
