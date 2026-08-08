@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { MODULE, completedCount, loadProgress } from "@/lib/learning";
 
 const fade = {
   initial: { opacity: 0, y: 14 },
@@ -118,6 +120,18 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Dashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [learning, setLearning] = useState(() => loadProgress());
+
+  useEffect(() => {
+    const sync = () => setLearning(loadProgress());
+    sync();
+    window.addEventListener("focus", sync);
+    return () => window.removeEventListener("focus", sync);
+  }, []);
+
+  const doneLessons = completedCount(learning);
+  const pct = Math.round((doneLessons / MODULE.totalLessons) * 100);
+  const currentLesson = MODULE.lessons.find((lesson) => !learning[lesson.id]) ?? MODULE.lessons[0];
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -210,6 +224,71 @@ export default function Dashboard() {
               <p className="text-[12px] text-graphite/55">Você está 3 dias à frente do plano sugerido.</p>
             </div>
           </motion.div>
+
+          <motion.section
+            {...fade}
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8 overflow-hidden rounded-lg bg-navy text-ivory"
+          >
+            <Link href="/dashboard/aprender" className="group block p-6 md:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-6">
+                <div className="min-w-0 max-w-[560px]">
+                  <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Continue aprendendo</p>
+                  <h2 className="mt-3 font-serif text-[clamp(1.4rem,2.3vw,1.9rem)] leading-tight tracking-[-.02em]">{MODULE.title}</h2>
+                  <p className="mt-2 text-[12px] leading-5 text-ivory/60">Aula {currentLesson.number}: {currentLesson.title}</p>
+                  <div className="mt-5 flex items-center gap-4">
+                    <div className="w-full max-w-[380px]">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-[.12em]">
+                        <span className="text-ivory/55">{doneLessons} de {MODULE.totalLessons} aulas concluídas</span>
+                        <span className="text-gold">{pct}%</span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                          className="h-full rounded-full bg-gold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-flex min-h-12 items-center justify-center gap-4 border border-gold bg-gold px-5 text-[11px] font-bold text-navy transition-[padding,transform] duration-500 ease-out group-hover:-translate-y-0.5 group-hover:px-7">
+                    Continuar módulo <span aria-hidden="true" className="text-base leading-none">→</span>
+                  </span>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-white/10 pt-5">
+                {MODULE.lessons.map((lesson) => {
+                  const isDone = !!learning[lesson.id];
+                  const isCurrent = lesson.id === currentLesson.id && !isDone;
+                  return (
+                    <span
+                      key={lesson.id}
+                      className={`grid h-7 w-7 place-items-center rounded-[5px] border text-[10px] font-bold ${
+                        isDone
+                          ? "border-gold bg-gold text-navy"
+                          : isCurrent
+                            ? "border-gold text-gold"
+                            : "border-white/20 text-ivory/35"
+                      }`}
+                    >
+                      {isDone ? "✓" : lesson.number}
+                    </span>
+                  );
+                })}
+                {MODULE.locked.map((locked) => (
+                  <span
+                    key={`locked-${locked.number}`}
+                    className="grid h-7 w-7 place-items-center rounded-[5px] border border-white/10 text-[10px] text-ivory/25"
+                  >
+                    ·
+                  </span>
+                ))}
+              </div>
+            </Link>
+          </motion.section>
 
           <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
             {[
