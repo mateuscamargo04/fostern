@@ -50,12 +50,7 @@ function Monogram() {
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="#inicio" aria-label="Fostern, início" className="flex items-center gap-2.5">
-      <img src="/images/fostern-logo" alt="" />
-      <img
-  src="/images/fostern-logo.png"
-  alt="Fostern"
-  className="w-60 h-auto"
-/>
+      <img src="/images/fostern-logo.png" alt="Fostern" className="w-44 h-auto md:w-60" />
     </Link>
   );
 }
@@ -157,6 +152,13 @@ function Header() {
 
   const close = () => setOpen(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [open]);
+
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${scrolled ? "border-b border-white/10 bg-navy/95" : "bg-transparent"}`}>
       <div className="mx-auto flex h-[82px] w-[min(100%-40px,1280px)] items-center justify-between text-ivory md:h-[92px] md:w-[min(100%-80px,1320px)]">
@@ -167,7 +169,8 @@ function Header() {
           <Link className="nav-link text-[10px] font-semibold" href="#universidades">Universidades</Link>
           <Link className="nav-link text-[10px] font-semibold" href="#familias">Para famílias</Link>
           <Link className="nav-link text-[10px] font-semibold" href="#planos">Planos</Link>
-          <PrimaryLink href="#conversa">Conheça a Fostern</PrimaryLink>
+          <Link className="nav-link text-[10px] font-semibold" href="/auth">Entrar</Link>
+          <PrimaryLink href="/auth?mode=register">Criar conta</PrimaryLink>
         </nav>
         <button type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open} className="grid h-11 w-11 place-items-center border border-white/25 lg:hidden">
           <span className="grid gap-1.5">
@@ -181,7 +184,8 @@ function Header() {
           <motion.nav initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.24 }} aria-label="Navegação móvel" className="border-t border-white/10 bg-navy px-5 pb-8 pt-3 text-ivory lg:hidden">
             <div className="mx-auto flex max-w-md flex-col">
               {[['Método', '#metodo'], ['Mentoria', '#mentoria'], ['Universidades', '#universidades'], ['Para famílias', '#familias'], ['Planos', '#planos']].map(([label, href]) => <Link key={href} onClick={close} href={href} className="border-b border-white/10 py-4 text-sm font-medium">{label}</Link>)}
-              <Link onClick={close} href="#conversa" className="mt-6 bg-gold px-5 py-4 text-center text-xs font-bold text-navy">Conheça a Fostern</Link>
+              <Link onClick={close} href="/auth" className="mt-6 border border-white/25 px-5 py-4 text-center text-xs font-bold text-ivory">Entrar</Link>
+              <Link onClick={close} href="/auth?mode=register" className="mt-3 bg-gold px-5 py-4 text-center text-xs font-bold text-navy">Criar conta</Link>
             </div>
           </motion.nav>
         )}
@@ -191,28 +195,24 @@ function Header() {
 }
 
 function Hero() {
-  const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", reduced ? "0%" : "6%"]);
-
   return (
-    <section ref={ref} id="inicio" className="grain relative flex min-h-[680px] overflow-hidden bg-navy text-ivory md:min-h-[94svh]">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.3, ease: [0.22, 1, .36, 1] }} style={{ y: imageY }} className="absolute inset-0">
-        <Image src={campusImages.mit} alt="Great Dome do MIT, em Cambridge, cercado por árvores" fill priority sizes="100vw" className="object-cover object-[68%_42%] brightness-[.98] saturate-[1.03]" />
+    <section id="inicio" className="grain relative h-[100svh] min-h-[600px] overflow-hidden bg-navy text-ivory">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.3, ease: [0.22, 1, .36, 1] }} className="absolute -inset-x-[100%] -inset-y-[150%] scale-[.333]">
+        <Image src="/images/campuses/mit-dome-2u.jpg" alt="Great Dome do MIT visto pelo Killian Court, ao entardecer" fill priority sizes="100vw" className="object-cover object-[92%_50%] brightness-[1.15] contrast-[1.4] saturate-[1.7] hue-rotate-[-6deg]" />
       </motion.div>
-      <div aria-hidden className="pointer-events-none absolute -left-[20%] top-1/2 h-[125%] w-[70%] -translate-y-1/2 rounded-[50%] bg-navy/88 blur-[95px] md:-left-[10%] md:h-[135%] md:w-[58%] md:blur-[120px]" />
-      <div className="relative z-10 mx-auto flex w-[min(100%-40px,1280px)] flex-col justify-center pb-20 pt-36 md:w-[min(100%-80px,1320px)] md:pb-24 md:pt-40">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(1,7,16,0.96)_0%,rgba(3,17,36,0.9)_28%,rgba(6,26,50,0.6)_52%,rgba(9,34,64,0.26)_72%,rgba(9,34,64,0)_92%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(3,10,20,0.85)_0%,rgba(3,12,24,0.45)_28%,rgba(3,12,24,0.12)_50%,rgba(3,12,24,0.2)_68%,rgba(1,6,14,0.75)_100%)]" />
+      <div className="relative z-10 mx-auto flex h-full w-[min(100%-40px,1280px)] flex-col justify-center md:w-[min(100%-80px,1320px)]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .9, delay: .25, ease: [0.22, 1, .36, 1] }}>
-          <p className="mb-8 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional, feita com profundidade.</p>
-          <h1 className="max-w-[560px] font-serif text-[clamp(3rem,5.6vw,5.4rem)] leading-[.93] tracking-[-.05em]">Ambição merece<br />um plano <em className="not-italic text-gold">à altura.</em></h1>
-          <p className="mt-8 max-w-[380px] text-[13px] leading-6 text-ivory/80">Para estudantes brasileiros prontos para construir uma trajetória internacional com profundidade.</p>
-          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
+          <p className="mb-6 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional, feita com profundidade.</p>
+          <h1 className="max-w-[560px] font-serif text-[clamp(2.6rem,5.4vw,5.4rem)] leading-[.93] tracking-[-.05em]">Ambição merece<br />um plano <em className="not-italic text-gold">à altura.</em></h1>
+          <p className="mt-6 max-w-[380px] text-[13px] leading-6 text-ivory/80">Para estudantes brasileiros prontos para construir uma trajetória internacional com profundidade.</p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-5">
             <PrimaryLink href="#conversa">Conheça a Fostern</PrimaryLink>
             <TextLink href="#metodo" light>Entenda o método</TextLink>
           </div>
-          <p className="mt-14 text-[9px] font-bold uppercase tracking-[.13em] text-ivory/60">Brasil · pensamento com alcance global</p>
         </motion.div>
+        <p className="absolute bottom-8 text-[9px] font-bold uppercase tracking-[.13em] text-ivory/60 md:bottom-11">Brasil · pensamento com alcance global</p>
       </div>
     </section>
   );
@@ -372,11 +372,11 @@ export function FosternLanding() {
 
         <section className="bg-ivory py-24 md:py-36"><div className="mx-auto grid w-[min(100%-40px,1280px)] gap-14 md:w-[min(100%-80px,1320px)] md:grid-cols-[.8fr_1.2fr] md:items-end"><Reveal><p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Do potencial à evidência</p><h2 className="mt-3 font-serif text-[clamp(2.8rem,4.7vw,4.8rem)] leading-[.93] tracking-[-.045em] text-navy">O objetivo não é parecer pronto.<br /><em className="not-italic text-deep-navy">É se tornar mais preparado.</em></h2></Reveal><Reveal delay={.1} className="border-t border-graphite/20"><div className="grid gap-7 border-b border-graphite/20 py-7 sm:grid-cols-[150px_1fr]"><p className="text-[10px] font-bold uppercase tracking-[.11em] text-gold">Antes</p><p className="font-serif text-[25px] leading-tight tracking-[-.025em] text-graphite/75">Intenção sem uma forma clara de virar trabalho.</p></div><div className="grid gap-7 border-b border-graphite/20 py-7 sm:grid-cols-[150px_1fr]"><p className="text-[10px] font-bold uppercase tracking-[.11em] text-gold">Durante</p><p className="font-serif text-[25px] leading-tight tracking-[-.025em] text-graphite/75">Escolhas cuidadosas, desenvolvimento e revisão.</p></div><div className="grid gap-7 border-b border-graphite/20 py-7 sm:grid-cols-[150px_1fr]"><p className="text-[10px] font-bold uppercase tracking-[.11em] text-gold">Depois</p><p className="font-serif text-[25px] leading-tight tracking-[-.025em] text-navy">Uma candidatura que deixa ver o estudante por inteiro.</p></div></Reveal></div></section>
 
-        <section className="bg-deep-navy py-24 text-ivory md:py-36"><div className="mx-auto grid w-[min(100%-40px,1280px)] gap-12 md:w-[min(100%-80px,1320px)] md:grid-cols-[.86fr_1.14fr] md:items-center"><Reveal><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">Tecnologia com critério</p><h2 className="mt-3 font-serif text-[clamp(2.8rem,4.7vw,4.8rem)] leading-[.93] tracking-[-.045em]">Inteligência que organiza. <em className="not-italic text-gold">A autoria continua sendo sua.</em></h2><p className="mt-7 max-w-[430px] text-[13px] leading-7 text-ivory/78">A tecnologia da Fostern identifica lacunas, consolida contexto e preserva continuidade entre conversas e decisões. Ela não escreve o estudante. Ela cria condições para que ele pense melhor.</p></Reveal><Reveal delay={.12} className="border border-ivory/20 bg-navy p-6 sm:p-9"><div className="flex items-center justify-between border-b border-ivory/15 pb-5"><p className="text-[9px] font-bold tracking-[.14em] text-ivory/65">LEITURA DE CONTEXTO</p><span className="text-gold">●</span></div><div className="py-7"><p className="text-[9px] font-bold tracking-[.13em] text-gold">PERGUNTA EM ABERTO</p><p className="mt-3 max-w-md font-serif text-[28px] leading-tight tracking-[-.03em]">O que conecta sua curiosidade por cidades às pesquisas que você vem realizando?</p></div><div className="grid gap-px bg-ivory/15 sm:grid-cols-3"><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">CONTEXTO</p><p className="mt-2 text-[11px] text-ivory/85">Urbanismo e matemática</p></div><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">PRÓXIMO PASSO</p><p className="mt-2 text-[11px] text-ivory/85">Mapear referências</p></div><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">ACOMPANHAMENTO</p><p className="mt-2 text-[11px] text-ivory/85">Mentoria de sexta</p></div></div></Reveal></div></section>
+        <section className="bg-deep-navy py-24 text-ivory md:py-36"><div className="mx-auto grid w-[min(100%-40px,1280px)] gap-12 md:w-[min(100%-80px,1320px)] md:grid-cols-[.86fr_1.14fr] md:items-center"><Reveal><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">Tecnologia com critério</p><h2 className="mt-3 font-serif text-[clamp(2.8rem,4.7vw,4.8rem)] leading-[.93] tracking-[-.045em]">Inteligência que organiza. <em className="not-italic text-gold">A autoria continua sendo sua.</em></h2><p className="mt-7 max-w-[430px] text-[13px] leading-7 text-ivory/78">A tecnologia da Fostern identifica lacunas, consolida contexto e preserva continuidade entre conversas e decisões. Ela não escreve o estudante. Ela cria condições para que ele pense melhor.</p><p className="mt-4 max-w-[430px] text-[13px] leading-7 text-ivory/78">Uma rotina fixa parte do princípio de que todo dia é igual — seu aprendizado não é. Um imprevisto, uma prova mais difícil, um dia de cansaço: qualquer desvio quebra o plano inteiro, porque rotinas lineares dependem de tudo acontecer exatamente como previsto.</p><p className="mt-4 max-w-[430px] text-[13px] leading-7 text-ivory/78">Por isso a Fostern substitui o cronograma engessado por um <strong className="font-semibold text-ivory">ciclo de estudos</strong>: ele revisita cada matéria em intervalos, se recalcula sozinho quando você erra ou acerta mais do que o esperado, e continua funcionando mesmo quando um dia é perdido — sem culpa, sem recomeçar do zero. É a mesma lógica da prática espaçada e intercalada, aplicada à preparação para o SAT, o TOEFL e o restante da candidatura.</p></Reveal><Reveal delay={.12} className="border border-ivory/20 bg-navy p-6 sm:p-9"><div className="flex items-center justify-between border-b border-ivory/15 pb-5"><p className="text-[9px] font-bold tracking-[.14em] text-ivory/65">LEITURA DE CONTEXTO</p><span className="text-gold">●</span></div><div className="py-7"><p className="text-[9px] font-bold tracking-[.13em] text-gold">PERGUNTA EM ABERTO</p><p className="mt-3 max-w-md font-serif text-[28px] leading-tight tracking-[-.03em]">O que conecta sua curiosidade por cidades às pesquisas que você vem realizando?</p></div><div className="grid gap-px bg-ivory/15 sm:grid-cols-3"><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">CONTEXTO</p><p className="mt-2 text-[11px] text-ivory/85">Urbanismo e matemática</p></div><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">PRÓXIMO PASSO</p><p className="mt-2 text-[11px] text-ivory/85">Mapear referências</p></div><div className="bg-deep-navy p-4"><p className="text-[8px] font-bold tracking-[.12em] text-ivory/50">ACOMPANHAMENTO</p><p className="mt-2 text-[11px] text-ivory/85">Mentoria de sexta</p></div></div></Reveal></div><Reveal delay={.18} className="mx-auto mt-16 grid w-[min(100%-40px,1280px)] gap-px bg-ivory/15 sm:grid-cols-2 md:w-[min(100%-80px,1320px)] md:grid-cols-4">{[["Otimização em Matemática (SAT)", "Prática direcionada que identifica e elimina pontos fracos específicos para o exame."], ["Prontidão para o TOEFL", "Pontuação de prontidão por seção, com recomendações claras de melhoria."], ["Analytics de desempenho", "Leitura profunda de padrões de estudo, evolução de notas e eficiência."], ["Ciclo de estudo dinâmico", "Cronograma que se recalcula sozinho, adaptando-se ao seu ritmo — sem rotina fixa."]].map(([title, body]) => <div key={title} className="bg-deep-navy p-6"><p className="font-serif text-[17px] leading-tight text-ivory">{title}</p><p className="mt-2 text-[11px] leading-5 text-ivory/65">{body}</p></div>)}</Reveal></section>
 
         <section id="familias" className="bg-mist py-24 md:py-32"><Reveal className="mx-auto grid w-[min(100%-40px,1100px)] gap-7 md:w-[min(100%-80px,1100px)] md:grid-cols-[25%_1fr]"><div><p className="font-serif text-xl text-gold">02</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Para famílias</p></div><div><h2 className="font-serif text-[clamp(2.7rem,4.4vw,4.5rem)] leading-[.95] tracking-[-.045em] text-navy">Apoiar sem assumir<br />o lugar do <em className="not-italic text-deep-navy">estudante.</em></h2><p className="mt-7 max-w-[610px] text-[13px] leading-7 text-graphite/80">Aplicar para universidades internacionais envolve escolhas importantes, prazos, expectativas e investimento emocional. A Fostern dá visibilidade ao processo e orientação para que a família apoie com clareza—preservando a autonomia de quem está construindo o próprio futuro.</p><div className="mt-7"><TextLink href="#conversa">Entenda o papel da família</TextLink></div></div></Reveal></section>
 
-        <section className="bg-ivory py-24 md:py-36"><Reveal className="mx-auto grid w-[min(100%-40px,1280px)] gap-8 md:w-[min(100%-80px,1320px)] md:grid-cols-[25%_1fr]"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Caderno Fostern</p><article className="border-l border-graphite/20 pl-0 md:pl-10"><p className="text-[9px] font-bold tracking-[.12em] text-graphite/60">NOTA DE ORIENTAÇÃO — 08 MIN DE LEITURA</p><h2 className="mt-6 max-w-4xl font-serif text-[clamp(2.7rem,4.4vw,4.6rem)] leading-[.96] tracking-[-.045em] text-navy">A pergunta certa não é “qual universidade devo escolher?”</h2><p className="mt-5 max-w-xl text-[14px] leading-6 text-graphite/75">É “que tipo de trabalho quero que minha candidatura torne visível?”</p><div className="mt-7"><TextLink href="#conversa">Ler a nota</TextLink></div></article></Reveal></section>
+        <section className="bg-ivory py-24 md:py-36"><div className="mx-auto grid w-[min(100%-40px,1280px)] gap-12 md:w-[min(100%-80px,1320px)] md:grid-cols-[.86fr_1.14fr] md:items-center"><Reveal><p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Nossa visão</p><h2 className="mt-3 font-serif text-[clamp(2.8rem,4.7vw,4.8rem)] leading-[.93] tracking-[-.045em] text-navy">Ampliar o acesso à <em className="not-italic text-deep-navy">educação de elite.</em></h2><p className="mt-7 max-w-[430px] text-[13px] leading-7 text-graphite/80">A Fostern existe para democratizar a mobilidade acadêmica estratégica. Geografia, recursos e assimetria de informação não deveriam decidir quem tem acesso às melhores universidades do mundo.</p><p className="mt-4 max-w-[430px] text-[13px] leading-7 text-graphite/80">Estamos construindo a estrutura para a próxima geração de estudantes brasileiros com alcance global.</p></Reveal><Reveal delay={.12} className="border border-graphite/15 bg-navy p-6 text-ivory sm:p-9"><p className="text-[9px] font-bold tracking-[.14em] text-gold">ALCANCE</p><p className="mt-3 max-w-sm font-serif text-[24px] leading-tight tracking-[-.03em]">Pensado para crescer junto com nossos estudantes.</p><svg viewBox="0 0 400 130" className="mt-8 h-auto w-full" fill="none" aria-hidden="true"><path d="M20 100 Q90 40 160 90 T300 70 T380 110" stroke="#D4AF37" strokeOpacity=".55" strokeWidth="1.2" /><circle cx="20" cy="100" r="3" fill="#D4AF37" /><circle cx="160" cy="90" r="3" fill="#D4AF37" /><circle cx="300" cy="70" r="3" fill="#D4AF37" /><circle cx="380" cy="110" r="3" fill="#D4AF37" /></svg></Reveal></div></section>
 
         <section id="planos" className="bg-mist py-24 md:py-36">
           <div className="mx-auto w-[min(100%-40px,1280px)] md:w-[min(100%-80px,1320px)]">
