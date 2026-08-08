@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const fade = {
   initial: { opacity: 0, y: 14 },
@@ -53,73 +54,153 @@ const toneMap: Record<string, string> = {
   line: "border-mist bg-ivory text-graphite/70",
 };
 
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <nav className="flex-1 space-y-1 px-4">
+      {navItems.map((item) => (
+        <a
+          key={item.label}
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate?.();
+          }}
+          className={`flex items-center gap-3 rounded-md px-3.5 py-2.5 text-[12px] font-semibold transition-colors duration-200 ${
+            item.active ? "bg-white/[.07] text-gold" : "text-ivory/60 hover:bg-white/[.04] hover:text-ivory"
+          }`}
+        >
+          <Icon d={item.d} className="h-[17px] w-[17px]" />
+          {item.label}
+          {item.label === "Metas & universidades" && (
+            <span className="ml-auto rounded-full border border-gold/40 px-1.5 py-0.5 text-[9px] font-bold leading-none text-gold">3</span>
+          )}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function MentorCard() {
+  return (
+    <div className="m-4 rounded-lg border border-white/10 bg-white/[.04] p-4">
+      <p className="text-[9px] font-bold uppercase tracking-[.14em] text-gold">Próxima mentoria</p>
+      <p className="mt-2 text-[12px] font-semibold text-ivory">Qui · 14 de ago · 15h</p>
+      <p className="mt-0.5 text-[10px] leading-4 text-ivory/50">Devolutiva do perfil acadêmico</p>
+    </div>
+  );
+}
+
+function ProfileBlock() {
+  return (
+    <div className="flex items-center gap-3 border-t border-white/10 px-7 py-5">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[14px] font-semibold text-navy">LM</div>
+      <div className="min-w-0">
+        <p className="truncate text-[12px] font-semibold text-ivory">Lucas Martins</p>
+        <p className="text-[10px] text-ivory/45">Estudante · ciclo 2027</p>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <>
+      <div className="px-7 pb-6 pt-7">
+        <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
+        <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
+      </div>
+      <SidebarNav onNavigate={onNavigate} />
+      <MentorCard />
+      <ProfileBlock />
+    </>
+  );
+}
+
 export default function Dashboard() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [mobileOpen]);
+
   return (
     <div className="flex min-h-[100svh] bg-mist/40 text-graphite">
       <aside className="sticky top-0 hidden h-[100svh] w-[248px] shrink-0 flex-col bg-navy text-ivory lg:flex">
-        <div className="px-7 pb-6 pt-7">
-          <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
-          <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
-        </div>
-
-        <nav className="flex-1 space-y-1 px-4">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className={`flex items-center gap-3 rounded-md px-3.5 py-2.5 text-[12px] font-semibold transition-colors duration-200 ${
-                item.active ? "bg-white/[.07] text-gold" : "text-ivory/60 hover:bg-white/[.04] hover:text-ivory"
-              }`}
-            >
-              <Icon d={item.d} className="h-[17px] w-[17px]" />
-              {item.label}
-              {item.label === "Metas & universidades" && (
-                <span className="ml-auto rounded-full border border-gold/40 px-1.5 py-0.5 text-[9px] font-bold leading-none text-gold">3</span>
-              )}
-            </a>
-          ))}
-        </nav>
-
-        <div className="m-4 rounded-lg border border-white/10 bg-white/[.04] p-4">
-          <p className="text-[9px] font-bold uppercase tracking-[.14em] text-gold">Próxima mentoria</p>
-          <p className="mt-2 text-[12px] font-semibold text-ivory">Qui · 14 de ago · 15h</p>
-          <p className="mt-0.5 text-[10px] leading-4 text-ivory/50">Devolutiva do perfil acadêmico</p>
-        </div>
-
-        <div className="flex items-center gap-3 border-t border-white/10 px-7 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[14px] font-semibold text-navy">LM</div>
-          <div className="min-w-0">
-            <p className="truncate text-[12px] font-semibold text-ivory">Lucas Martins</p>
-            <p className="text-[10px] text-ivory/45">Estudante · ciclo 2027</p>
-          </div>
-        </div>
+        <Sidebar />
       </aside>
 
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-40 bg-navy/60 backdrop-blur-sm lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-navy text-ivory shadow-2xl lg:hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Fechar menu"
+                className="absolute right-3 top-5 grid h-10 w-10 place-items-center border border-white/20 text-ivory transition-colors hover:border-gold hover:text-gold"
+              >
+                <span className="text-lg leading-none">✕</span>
+              </button>
+              <Sidebar onNavigate={() => setMobileOpen(false)} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-mist bg-ivory/85 px-6 py-4 backdrop-blur md:px-10">
-          <div className="flex items-center gap-3 lg:hidden">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/10 bg-navy px-4 py-3.5 text-ivory md:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menu"
+            aria-expanded={mobileOpen}
+            className="grid h-11 w-11 shrink-0 place-items-center border border-white/25 transition-colors hover:border-gold hover:text-gold lg:hidden"
+          >
+            <span className="grid gap-1.5">
+              <span className="h-px w-5 bg-current" />
+              <span className="h-px w-5 bg-current" />
+              <span className="h-px w-5 bg-current" />
+            </span>
+          </button>
+          <div className="lg:hidden">
             <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-28" />
           </div>
-          <div className="hidden items-center gap-2 text-[12px] text-graphite/50 lg:flex">
-            <span className="font-semibold text-graphite">Visão geral</span>
+          <div className="hidden items-center gap-2 text-[12px] text-ivory/50 lg:flex">
+            <span className="font-semibold text-gold">Visão geral</span>
             <span>/</span>
             <span>Início do semestre</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-mist bg-white px-4 py-2 text-[12px] text-graphite/50 md:flex">
+            <div className="hidden items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-[12px] text-ivory/60 md:flex">
               <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3" className="h-3.5 w-3.5" />
               Buscar material, tarefa…
             </div>
-            <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-mist bg-white text-graphite/70 transition-colors hover:text-gold">
+            <button className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-ivory/80 transition-colors hover:border-gold hover:text-gold">
               <Icon d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />
               <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-gold" />
             </button>
-            <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-navy font-serif text-[13px] font-semibold text-gold sm:flex">LM</div>
+            <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-gold font-serif text-[13px] font-semibold text-navy sm:flex">LM</div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1180px] flex-1 px-6 py-8 md:px-10 md:py-10">
+        <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-8 md:px-10 md:py-10">
           <motion.div {...fade}>
             <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Quinta-feira, 6 de agosto</p>
             <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
@@ -141,10 +222,10 @@ export default function Dashboard() {
                 key={card.label}
                 {...fade}
                 transition={{ duration: 0.7, delay: 0.08 * (i + 1), ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-lg border border-mist bg-white p-5"
+                className="rounded-lg border border-mist bg-white p-4 md:p-5"
               >
                 <p className="text-[10px] font-bold uppercase tracking-[.12em] text-graphite/45">{card.label}</p>
-                <p className="mt-2 font-serif text-[2.2rem] leading-none tracking-[-.02em] text-navy">{card.value}</p>
+                <p className="mt-2 font-serif text-[1.9rem] leading-none tracking-[-.02em] text-navy md:text-[2.2rem]">{card.value}</p>
                 <p className="mt-1.5 text-[10px] text-graphite/50">{card.meta}</p>
                 <div className="mt-4 h-1 overflow-hidden rounded-full bg-mist">
                   <div className="h-full rounded-full bg-gold" style={{ width: `${Math.min(100, (card.bar / (card.max ?? 100)) * 100)}%` }} />
@@ -154,7 +235,7 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-6 lg:col-span-2">
+            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Sua jornada</h2>
                 <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-bold text-gold hover:text-navy">Ver tudo →</a>
@@ -193,7 +274,7 @@ export default function Dashboard() {
               </ol>
             </motion.section>
 
-            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.38, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-6">
+            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.38, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Próximos prazos</h2>
               </div>
@@ -218,7 +299,7 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-6 lg:col-span-2">
+            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Universidades na mira</h2>
                 <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-bold text-gold hover:text-navy">Gerir lista →</a>
@@ -250,7 +331,7 @@ export default function Dashboard() {
               </div>
             </motion.section>
 
-            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.52, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col rounded-lg border border-mist bg-navy p-6 text-ivory">
+            <motion.section {...fade} transition={{ duration: 0.7, delay: 0.52, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col rounded-lg border border-mist bg-navy p-5 text-ivory md:p-6">
               <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Próxima mentoria</p>
               <p className="mt-4 font-serif text-[1.6rem] leading-tight tracking-[-.02em]">Devolutiva do perfil acadêmico</p>
               <div className="mt-5 space-y-2.5 text-[12px] text-ivory/70">
