@@ -9,9 +9,8 @@ import {
   Lesson,
   MODULE,
   completedCount,
-  loadProgress,
-  saveProgress,
 } from "@/lib/learning";
+import { useProgress } from "@/lib/use-progress";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -567,16 +566,10 @@ function LessonView({
 }
 
 export default function LearnPage() {
-  const [progress, setProgress] = useState<ProgressMap>(() => loadProgress());
+  const { progress, complete } = useProgress();
   const [view, setView] = useState<View>({ name: "module" });
 
   const activeLesson = view.name === "lesson" ? MODULE.lessons.find((lesson) => lesson.id === view.lessonId) : undefined;
-
-  const complete = (lessonId: string) => {
-    const next = { ...progress, [lessonId]: true };
-    setProgress(next);
-    saveProgress(next);
-  };
 
   return (
     <>

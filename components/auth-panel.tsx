@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { FormEvent, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type Mode = "login" | "register";
 
@@ -60,7 +61,23 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
     setDone(message);
   };
 
-  const submit = (event: FormEvent) => {
+  const translateError = (raw: string) => {
+    const map: [RegExp, string][] = [
+      [/Invalid login credentials/i, "E-mail ou senha incorretos."],
+      [/User already registered/i, "Este e-mail já está cadastrado. Faça login."],
+      [/Email not confirmed/i, "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada (e o spam)."],
+      [/Password should be at least/i, "A senha precisa ter pelo menos 8 caracteres."],
+      [/Unable to validate email/i, "E-mail inválido. Confira o formato."],
+      [/rate limit/i, "Muitas tentativas. Aguarde um minuto e tente de novo."],
+      [/provider is not enabled/i, "Login com Google ainda não foi configurado. Use e-mail e senha por enquanto."],
+    ];
+    for (const [pattern, replacement] of map) {
+      if (pattern.test(raw)) return replacement;
+    }
+    return raw;
+  };
+
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
     setDone(null);
@@ -71,20 +88,67 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       if (password !== confirm) return setError("As senhas não conferem.");
     }
     setSubmitting(true);
-    window.setTimeout(() => {
+    const supabase = createClient();
+    try {
       if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
         window.location.href = "/dashboard";
         return;
       }
-      finish("Conta criada. Em breve você poderá entrar na sua área.");
-    }, 900);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { nome: name } },
+      });
+      if (error) throw error;
+      if (data.session) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      finish("Conta criada! Enviamos um link de confirmação para o seu e-mail.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Algo deu errado. Tente novamente.";
+      setError(translateError(message));
+      setSubmitting(false);
+    }
   };
 
-  const google = () => {
+  const google = async () => {
     setError(null);
     setDone(null);
     setSubmitting(true);
-    window.setTimeout(() => finish("Login com Google — conecte o backend para autenticar de verdade."), 900);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) throw error;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Não foi possível entrar com o Google.";
+      setError(translateError(message));
+      setSubmitting(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    setError(null);
+    setDone(null);
+    if (!email.includes("@") || !email.includes(".")) return setError("Informe seu e-mail para enviarmos o link.");
+    setSubmitting(true);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=login`,
+      });
+      if (error) throw error;
+      finish("Enviamos um link de recuperação para o seu e-mail.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Não foi possível enviar o link.";
+      setError(translateError(message));
+      setSubmitting(false);
+    }
   };
 
   const isRegister = mode === "register";
@@ -207,9 +271,14 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
 
             {!isRegister && (
               <div className="flex justify-end">
-                <Link href="#" className="text-[10px] font-bold uppercase tracking-[.14em] text-ivory/50 transition-colors hover:text-gold">
+                <button
+                  type="button"
+                  onClick={resetPassword}
+                  disabled={submitting}
+                  className="text-[10px] font-bold uppercase tracking-[.14em] text-ivory/50 transition-colors hover:text-gold"
+                >
                   Esqueci minha senha
-                </Link>
+                </button>
               </div>
             )}
 

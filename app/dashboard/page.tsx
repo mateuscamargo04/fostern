@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { MODULE, completedCount, loadProgress } from "@/lib/learning";
+import { MODULE, completedCount } from "@/lib/learning";
+import { createClient } from "@/lib/supabase/client";
+import { useProgress } from "@/lib/use-progress";
 
 const fade = {
   initial: { opacity: 0, y: 14 },
@@ -92,19 +94,32 @@ function MentorCard() {
   );
 }
 
-function ProfileBlock() {
+type UserInfo = { name: string; firstName: string; initials: string; email: string } | null;
+
+function ProfileBlock({ user, onSignOut }: { user: UserInfo; onSignOut: () => void }) {
   return (
-    <div className="flex items-center gap-3 border-t border-white/10 px-7 py-5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[14px] font-semibold text-navy">LM</div>
-      <div className="min-w-0">
-        <p className="truncate text-[12px] font-semibold text-ivory">Lucas Martins</p>
-        <p className="text-[10px] text-ivory/45">Estudante · ciclo 2027</p>
+    <div className="border-t border-white/10 px-7 py-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[14px] font-semibold text-navy">
+          {user?.initials ?? "ES"}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[12px] font-semibold text-ivory">{user?.name ?? "Estudante"}</p>
+          <p className="truncate text-[10px] text-ivory/45">{user?.email ?? "Área do estudante"}</p>
+        </div>
       </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="mt-3 w-full rounded-md border border-white/15 py-2 text-[10px] font-bold uppercase tracking-[.14em] text-ivory/60 transition-colors hover:border-gold hover:text-gold"
+      >
+        Sair
+      </button>
     </div>
   );
 }
 
-function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar({ user, onSignOut, onNavigate }: { user: UserInfo; onSignOut: () => void; onNavigate?: () => void }) {
   return (
     <>
       <div className="px-7 pb-6 pt-7">
@@ -113,25 +128,58 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <SidebarNav onNavigate={onNavigate} />
       <MentorCard />
-      <ProfileBlock />
+      <ProfileBlock user={user} onSignOut={onSignOut} />
     </>
   );
 }
 
 export default function Dashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [learning, setLearning] = useState(() => loadProgress());
+  const { progress: learning } = useProgress();
+  const [user, setUser] = useState<UserInfo>(null);
 
   useEffect(() => {
-    const sync = () => setLearning(loadProgress());
-    sync();
-    window.addEventListener("focus", sync);
-    return () => window.removeEventListener("focus", sync);
+    let active = true;
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session || !active) return;
+      let fullName = session.user.user_metadata?.nome as string | undefined;
+      if (!fullName) {
+        const { data } = await supabase.from("perfis").select("nome").eq("id", session.user.id).single();
+        fullName = data?.nome ?? undefined;
+      }
+      const full = fullName ?? session.user.email?.split("@")[0] ?? "Estudante";
+      const firstName = full.split(" ")[0];
+      const initials = full
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+      if (active) setUser({ name: full, firstName, initials, email: session.user.email ?? "" });
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const handleSignOut = async () => {
+    await createClient().auth.signOut();
+    window.location.href = "/";
+  };
 
   const doneLessons = completedCount(learning);
   const pct = Math.round((doneLessons / MODULE.totalLessons) * 100);
   const currentLesson = MODULE.lessons.find((lesson) => !learning[lesson.id]) ?? MODULE.lessons[0];
+
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  const todayLabel = now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const todayLabelCapitalized = todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -143,7 +191,7 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-[100svh] bg-mist/40 text-graphite">
       <aside className="sticky top-0 hidden h-[100svh] w-[248px] shrink-0 flex-col bg-navy text-ivory lg:flex">
-        <Sidebar />
+        <Sidebar user={user} onSignOut={handleSignOut} />
       </aside>
 
       <AnimatePresence>
@@ -172,7 +220,7 @@ export default function Dashboard() {
               >
                 <span className="text-lg leading-none">✕</span>
               </button>
-              <Sidebar onNavigate={() => setMobileOpen(false)} />
+              <Sidebar user={user} onSignOut={handleSignOut} onNavigate={() => setMobileOpen(false)} />
             </motion.aside>
           </>
         )}
@@ -210,16 +258,16 @@ export default function Dashboard() {
               <Icon d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />
               <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-gold" />
             </button>
-            <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-gold font-serif text-[13px] font-semibold text-navy sm:flex">LM</div>
+            <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-gold font-serif text-[13px] font-semibold text-navy sm:flex">{user?.initials ?? "ES"}</div>
           </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-8 md:px-10 md:py-10">
           <motion.div {...fade}>
-            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Quinta-feira, 6 de agosto</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">{todayLabelCapitalized}</p>
             <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
               <h1 className="font-serif text-[clamp(1.9rem,3vw,2.6rem)] leading-[1] tracking-[-.03em] text-navy">
-                Boa tarde, Lucas<span className="text-gold">.</span>
+                {greeting}, {user?.firstName ?? "estudante"}<span className="text-gold">.</span>
               </h1>
               <p className="text-[12px] text-graphite/55">Você está 3 dias à frente do plano sugerido.</p>
             </div>
