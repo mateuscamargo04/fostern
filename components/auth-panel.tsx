@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "login" | "register";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 const campusImages = [
   "/images/campuses/oxford.jpg",
@@ -55,11 +57,46 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
   const [done, setDone] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const id = window.setInterval(() => setSlide((s) => (s + 1) % campusImages.length), 5000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    const render = () => {
+      if (captchaRef.current && window.turnstile) {
+        window.turnstile.render(captchaRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token) => setCaptchaToken(token),
+          "expired-callback": () => setCaptchaToken(null),
+          "error-callback": () => setCaptchaToken(null),
+        });
+      }
+    };
+    if (window.turnstile) {
+      render();
+    } else {
+      window.onloadTurnstileCallback = render;
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+    return () => {
+      if (captchaRef.current && window.turnstile) window.turnstile.remove(captchaRef.current);
+    };
+  }, []);
+
+  const resetCaptcha = () => {
+    if (captchaRef.current && window.turnstile) window.turnstile.reset(captchaRef.current);
+    setCaptchaToken(null);
+  };
 
   const switchMode = (next: Mode) => {
     setMode(next);
@@ -98,11 +135,12 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       if (name.trim().length < 2) return setError("Informe seu nome completo.");
       if (password !== confirm) return setError("As senhas não conferem.");
     }
+    if (TURNSTILE_SITE_KEY && !captchaToken) return setError("Complete a verificação de segurança.");
     setSubmitting(true);
     const supabase = createClient();
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captchaToken ?? undefined } });
         if (error) throw error;
         window.location.href = "/dashboard";
         return;
@@ -110,7 +148,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { nome: name } },
+        options: { data: { nome: name }, captchaToken: captchaToken ?? undefined },
       });
       if (error) throw error;
       if (data.session) {
@@ -122,6 +160,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       const message = err instanceof Error ? err.message : "Algo deu errado. Tente novamente.";
       setError(translateError(message));
       setSubmitting(false);
+      resetCaptcha();
     }
   };
 
@@ -152,6 +191,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?mode=login`,
+        captchaToken: captchaToken ?? undefined,
       });
       if (error) throw error;
       finish("Enviamos um link de recuperação para o seu e-mail.");
@@ -159,6 +199,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       const message = err instanceof Error ? err.message : "Não foi possível enviar o link.";
       setError(translateError(message));
       setSubmitting(false);
+      resetCaptcha();
     }
   };
 
@@ -315,6 +356,12 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
 
             {(error || done) && (
               <p className={`text-[12px] leading-5 ${error ? "text-[#F2B8A8]" : "text-gold"}`}>{error ?? done}</p>
+            )}
+
+            {TURNSTILE_SITE_KEY && (
+              <div className="flex justify-center">
+                <div ref={captchaRef} />
+              </div>
             )}
 
             <button
