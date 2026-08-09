@@ -40,9 +40,9 @@ export type LockedLesson = {
   title: string;
 };
 
-const STORAGE_KEY = "fostern-aprendizagem-progresso";
+const STORAGE_KEY = "fostern-aprendizagem-progresso-v2";
 
-export const DEFAULT_PROGRESS: ProgressMap = { "lesson-1": true };
+export const DEFAULT_PROGRESS: ProgressMap = {};
 
 export function loadProgress(): ProgressMap {
   if (typeof window === "undefined") return { ...DEFAULT_PROGRESS };
