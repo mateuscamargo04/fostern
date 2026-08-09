@@ -31,33 +31,6 @@ const navItems = [
   { label: "Comunidade", d: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z" },
 ];
 
-const timeline = [
-  { title: "Diagnóstico inicial", note: "Perfil, histórico e pontos fortes mapeados", date: "Fev 2026", status: "done" },
-  { title: "Estratégia definida", note: "Lista curta de universidades e plano de trabalho", date: "Mar 2026", status: "done" },
-  { title: "Construção do perfil acadêmico", note: "Projeto autoral em andamento · 78%", date: "Agora", status: "current" },
-  { title: "Testes padronizados", note: "SAT & IELTS agendados", date: "Set 2026", status: "upcoming" },
-  { title: "Essays & candidaturas", note: "Redação e envio dos materiais", date: "Nov 2026", status: "upcoming" },
-  { title: "Decisão de admissão", note: "Ciclo 2027/28", date: "2027", status: "upcoming" },
-];
-
-const deadlines = [
-  { label: "Devolutiva do rascunho do perfil", date: "12 ago", tag: "Esta semana", tone: "gold" },
-  { label: "Simulado SAT nº 3", date: "19 ago", tag: "Agendado", tone: "line" },
-  { label: "Prazo recomendado · IELTS", date: "02 set", tag: "Meta", tone: "line" },
-  { label: "Abertura de candidaturas · Oxford", date: "15 out", tag: "Janela", tone: "line" },
-];
-
-const universities = [
-  { name: "MIT", place: "Cambridge, EUA", image: "/images/campuses/mit-dome-dusk.jpg", rate: "4%", fit: 92, prazo: "05 jan" },
-  { name: "Oxford", place: "Oxford, Reino Unido", image: "/images/campuses/oxford.jpg", rate: "17%", fit: 86, prazo: "15 out" },
-  { name: "Stanford", place: "Palo Alto, EUA", image: "/images/campuses/stanford.jpg", rate: "4%", fit: 78, prazo: "01 dez" },
-];
-
-const toneMap: Record<string, string> = {
-  gold: "border-gold/50 bg-gold/10 text-gold",
-  line: "border-mist bg-ivory text-graphite/70",
-};
-
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex-1 space-y-1 px-4">
@@ -88,8 +61,8 @@ function MentorCard() {
   return (
     <div className="m-4 rounded-lg border border-white/10 bg-white/[.04] p-4">
       <p className="text-[9px] font-bold uppercase tracking-[.14em] text-gold">Próxima mentoria</p>
-      <p className="mt-2 text-[12px] font-semibold text-ivory">Qui · 14 de ago · 15h</p>
-      <p className="mt-0.5 text-[10px] leading-4 text-ivory/50">Devolutiva do perfil acadêmico</p>
+      <p className="mt-2 text-[12px] font-semibold text-ivory/80">Nenhuma agendada</p>
+      <p className="mt-0.5 text-[10px] leading-4 text-ivory/45">As sessões aparecem aqui quando forem marcadas.</p>
     </div>
   );
 }
@@ -269,7 +242,7 @@ export default function Dashboard() {
               <h1 className="font-serif text-[clamp(1.9rem,3vw,2.6rem)] leading-[1] tracking-[-.03em] text-navy">
                 {greeting}, {user?.firstName ?? "estudante"}<span className="text-gold">.</span>
               </h1>
-              <p className="text-[12px] text-graphite/55">Você está 3 dias à frente do plano sugerido.</p>
+              <p className="text-[12px] text-graphite/55">Seu painel começa limpo — a primeira aula é o primeiro passo.</p>
             </div>
           </motion.div>
 
@@ -340,10 +313,10 @@ export default function Dashboard() {
 
           <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
             {[
-              { label: "Progresso geral", value: "64%", meta: "+9% desde julho", bar: 64, accent: true },
-              { label: "Candidaturas em andamento", value: "3", meta: "MIT · Oxford · Stanford", bar: 3, max: 5 },
-              { label: "Prazos próximos", value: "4", meta: "nos próximos 60 dias", bar: 4, max: 6 },
-              { label: "Estudo esta semana", value: "21h", meta: "meta: 15h · acima da meta", bar: 21, max: 15 },
+              { label: "Progresso do módulo", value: `${pct}%`, meta: `${doneLessons} de ${MODULE.totalLessons} aulas`, bar: pct, max: 100 },
+              { label: "Aulas concluídas", value: `${doneLessons}`, meta: `módulo 1 · ${MODULE.title.split(":")[0]}`, bar: doneLessons, max: MODULE.totalLessons },
+              { label: "Candidaturas", value: "0", meta: "nenhuma adicionada", bar: 0, max: 1 },
+              { label: "Mentorias", value: "0", meta: "nenhuma agendada", bar: 0, max: 1 },
             ].map((card, i) => (
               <motion.div
                 key={card.label}
@@ -365,60 +338,28 @@ export default function Dashboard() {
             <motion.section {...fade} transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Sua jornada</h2>
-                <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-bold text-gold hover:text-navy">Ver tudo →</a>
+                <Link href="/dashboard/aprender" className="text-[11px] font-bold text-gold hover:text-navy">Começar →</Link>
               </div>
-
-              <ol className="mt-6">
-                {timeline.map((step, i) => (
-                  <li key={step.title} className="relative flex gap-4 pb-5 last:pb-0">
-                    {i < timeline.length - 1 && (
-                      <span className={`absolute left-[13px] top-7 h-[calc(100%-24px)] w-px ${step.status === "upcoming" ? "bg-mist" : "bg-gold/40"}`} />
-                    )}
-                    <span
-                      className={`relative z-10 mt-0.5 flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full border ${
-                        step.status === "done"
-                          ? "border-gold bg-gold text-navy"
-                          : step.status === "current"
-                            ? "border-gold bg-navy text-gold ring-4 ring-gold/15"
-                            : "border-mist bg-ivory text-mist"
-                      }`}
-                    >
-                      {step.status === "done" ? (
-                        <Icon d="M5 13l4 4L19 7" className="h-3.5 w-3.5" />
-                      ) : (
-                        <span className="text-[10px] font-bold">{i + 1}</span>
-                      )}
-                    </span>
-                    <div className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4">
-                      <div>
-                        <p className={`text-[13px] font-semibold ${step.status === "upcoming" ? "text-graphite/55" : "text-navy"}`}>{step.title}</p>
-                        <p className="mt-0.5 text-[11px] text-graphite/50">{step.note}</p>
-                      </div>
-                      <p className={`text-[10px] font-bold uppercase tracking-[.1em] ${step.status === "current" ? "text-gold" : "text-graphite/40"}`}>{step.date}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <div className="mt-6 flex items-start gap-4 rounded-md border border-mist bg-ivory p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-navy text-gold">
+                  <Icon d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" className="h-[18px] w-[18px]" />
+                </span>
+                <div>
+                  <p className="text-[13px] font-semibold text-navy">Sua jornada ainda não começou.</p>
+                  <p className="mt-1 text-[12px] leading-5 text-graphite/60">
+                    Complete a primeira aula do módulo 1 e seus marcos vão aparecer aqui, um a um.
+                  </p>
+                </div>
+              </div>
             </motion.section>
 
             <motion.section {...fade} transition={{ duration: 0.7, delay: 0.38, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Próximos prazos</h2>
               </div>
-              <ul className="mt-5 divide-y divide-mist/70">
-                {deadlines.map((item) => (
-                  <li key={item.label} className="flex items-center gap-3 py-3.5">
-                    <div className={`flex h-10 w-12 shrink-0 flex-col items-center justify-center rounded-md border ${toneMap[item.tone]}`}>
-                      <span className="text-[9px] font-bold uppercase leading-none opacity-70">{item.date.split(" ")[1]}</span>
-                      <span className="font-serif text-[15px] font-semibold leading-tight">{item.date.split(" ")[0]}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-[12px] font-semibold text-navy">{item.label}</p>
-                      <p className="text-[10px] text-graphite/50">{item.tag}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <p className="mt-5 text-[12px] leading-5 text-graphite/55">
+                Nenhum prazo por enquanto. Seus compromissos e prazos de candidatura vão aparecer aqui conforme você avança.
+              </p>
               <a href="#" onClick={(e) => e.preventDefault()} className="mt-4 block rounded-md border border-mist bg-ivory py-3 text-center text-[11px] font-bold text-navy transition-colors hover:border-gold hover:text-gold">
                 Abrir calendário
               </a>
@@ -431,49 +372,20 @@ export default function Dashboard() {
                 <h2 className="font-serif text-[1.35rem] tracking-[-.02em] text-navy">Universidades na mira</h2>
                 <a href="#" onClick={(e) => e.preventDefault()} className="text-[11px] font-bold text-gold hover:text-navy">Gerir lista →</a>
               </div>
-              <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                {universities.map((u) => (
-                  <div key={u.name} className="group overflow-hidden rounded-md border border-mist transition-colors hover:border-gold/60">
-                    <div className="relative h-24 overflow-hidden bg-navy">
-                      <img src={u.image} alt={u.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <span className="absolute left-2 top-2 rounded-full bg-navy/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[.1em] text-gold backdrop-blur">{u.prazo}</span>
-                    </div>
-                    <div className="p-3.5">
-                      <p className="font-serif text-[16px] font-semibold text-navy">{u.name}</p>
-                      <p className="text-[10px] text-graphite/50">{u.place}</p>
-                      <div className="mt-3 flex items-center justify-between text-[10px]">
-                        <span className="text-graphite/45">Taxa de admissão</span>
-                        <span className="font-bold text-graphite">{u.rate}</span>
-                      </div>
-                      <div className="mt-1.5 flex items-center justify-between text-[10px]">
-                        <span className="text-graphite/45">Afinidade</span>
-                        <span className="font-bold text-gold">{u.fit}%</span>
-                      </div>
-                      <div className="mt-2 h-1 overflow-hidden rounded-full bg-mist">
-                        <div className="h-full rounded-full bg-gold" style={{ width: `${u.fit}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="mt-5 text-[12px] leading-5 text-graphite/55">
+                Sua lista está vazia. Quando sua estratégia for definida, as universidades-alvo vão aparecer aqui com prazos e taxa de admissão.
+              </p>
             </motion.section>
 
             <motion.section {...fade} transition={{ duration: 0.7, delay: 0.52, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col rounded-lg border border-mist bg-navy p-5 text-ivory md:p-6">
               <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Próxima mentoria</p>
-              <p className="mt-4 font-serif text-[1.6rem] leading-tight tracking-[-.02em]">Devolutiva do perfil acadêmico</p>
+              <p className="mt-4 font-serif text-[1.6rem] leading-tight tracking-[-.02em]">Nenhuma sessão agendada.</p>
               <div className="mt-5 space-y-2.5 text-[12px] text-ivory/70">
-                <p className="flex items-center gap-2.5"><Icon d="M4 7h16M4 7v9.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V7M4 7l2.5-3h11l2.5 3M9 15.5h6" className="h-4 w-4 text-gold" /> Qui · 14 de agosto · 15h · 60 min</p>
-                <p className="flex items-center gap-2.5"><Icon d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3M12 21v-3M15.5 15.5l2 2M8.5 15.5l-2 2" className="h-4 w-4 text-gold" /> Tema: revisão do projeto autoral</p>
-              </div>
-              <div className="mt-auto flex items-center gap-3 border-t border-white/10 pt-5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[12px] font-semibold text-navy">D</div>
-                <div className="min-w-0">
-                  <p className="text-[12px] font-semibold text-ivory">Daniel</p>
-                  <p className="text-[10px] text-ivory/45">Direção de orientação</p>
-                </div>
+                <p className="flex items-center gap-2.5"><Icon d="M4 7h16M4 7v9.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V7M4 7l2.5-3h11l2.5 3M9 15.5h6" className="h-4 w-4 text-gold" /> Você será convidado para suas mentorias aqui.</p>
+                <p className="flex items-center gap-2.5"><Icon d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3M12 21v-3M15.5 15.5l2 2M8.5 15.5l-2 2" className="h-4 w-4 text-gold" /> Acompanhe datas, temas e pauta de cada encontro.</p>
               </div>
               <button className="mt-5 rounded-md border border-gold bg-gold py-3 text-[11px] font-bold text-navy transition-colors hover:bg-gold/90">
-                Preparar pauta
+                Agendar sessão
               </button>
             </motion.section>
           </div>
