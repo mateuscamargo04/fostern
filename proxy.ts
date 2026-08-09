@@ -29,6 +29,7 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isRoot = request.nextUrl.pathname === "/";
 
   if (!user && isDashboard) {
     const url = request.nextUrl.clone();
@@ -43,9 +44,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (user && isRoot) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/auth/:path*", "/dashboard/:path*"],
+  matcher: ["/", "/auth/:path*", "/dashboard/:path*"],
 };
