@@ -34,6 +34,16 @@ function GoogleIcon() {
   );
 }
 
+function EyeIcon({ visible }: { visible: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]" aria-hidden="true">
+      <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+      {visible && <path d="M4 4l16 16" />}
+    </svg>
+  );
+}
+
 export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
@@ -44,6 +54,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setSlide((s) => (s + 1) % campusImages.length), 5000);
@@ -241,15 +252,25 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
               <label htmlFor="auth-password" className="mb-2 block text-[10px] font-bold uppercase tracking-[.14em] text-ivory/60">
                 Senha
               </label>
-              <input
-                id="auth-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete={isRegister ? "new-password" : "current-password"}
-                placeholder="Pelo menos 8 caracteres"
-                className="w-full border-b border-white/20 bg-transparent pb-3 pt-1 text-[15px] text-ivory placeholder:text-ivory/35 focus:border-gold focus:outline-none"
-              />
+              <div className="relative">
+                <input
+                  id="auth-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  placeholder="Pelo menos 8 caracteres"
+                  className="w-full border-b border-white/20 bg-transparent pb-3 pr-10 pt-1 text-[15px] text-ivory placeholder:text-ivory/35 focus:border-gold focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  className="absolute right-0 top-1 grid h-8 w-8 place-items-center text-ivory/45 transition-colors hover:text-gold"
+                >
+                  <EyeIcon visible={showPassword} />
+                </button>
+              </div>
             </div>
 
             {isRegister && (
@@ -257,15 +278,25 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
                 <label htmlFor="auth-confirm" className="mb-2 block text-[10px] font-bold uppercase tracking-[.14em] text-ivory/60">
                   Confirmar senha
                 </label>
-                <input
-                  id="auth-confirm"
-                  type="password"
-                  value={confirm}
-                  onChange={(event) => setConfirm(event.target.value)}
-                  autoComplete="new-password"
-                  placeholder="Repita a senha"
-                  className="w-full border-b border-white/20 bg-transparent pb-3 pt-1 text-[15px] text-ivory placeholder:text-ivory/35 focus:border-gold focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    id="auth-confirm"
+                    type={showPassword ? "text" : "password"}
+                    value={confirm}
+                    onChange={(event) => setConfirm(event.target.value)}
+                    autoComplete="new-password"
+                    placeholder="Repita a senha"
+                    className="w-full border-b border-white/20 bg-transparent pb-3 pr-10 pt-1 text-[15px] text-ivory placeholder:text-ivory/35 focus:border-gold focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    className="absolute right-0 top-1 grid h-8 w-8 place-items-center text-ivory/45 transition-colors hover:text-gold"
+                  >
+                    <EyeIcon visible={showPassword} />
+                  </button>
+                </div>
               </div>
             )}
 
