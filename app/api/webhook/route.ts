@@ -45,6 +45,17 @@ export async function POST(request: Request) {
       const { data: plano } = await admin.from("planos").select("*").eq("slug", planSlug).single();
       if (!plano) break;
 
+      const subscriptionId = session.subscription ? String(session.subscription) : "";
+
+      if (subscriptionId) {
+        const { data: existente } = await admin
+          .from("assinaturas")
+          .select("id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .limit(1);
+        if (existente && existente.length > 0) break;
+      }
+
       const agora = new Date();
       const termino = addMeses(agora, periodoMeses(plano.periodo));
       const assinaturaId = crypto.randomUUID();

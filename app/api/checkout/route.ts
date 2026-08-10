@@ -36,11 +36,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Plano não encontrado." }, { status: 404 });
   }
 
+  if (plano.preco_centavos <= 0 || plano.periodo === "avulso") {
+    return NextResponse.json(
+      { error: "Este plano não pode ser assinado pelo checkout." },
+      { status: 400 },
+    );
+  }
+
   const origin = new URL(request.url).origin;
   const metadata = { usuario_id: user.id, plano_slug: plano.slug };
 
   try {
-    const recorrente = plano.periodo !== "avulso";
     const intervalo = plano.periodo === "anual" ? "year" : "month";
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
@@ -57,7 +63,7 @@ export async function POST(request: Request) {
           },
         },
       ],
-      subscription_data: recorrente ? { metadata } : undefined,
+      subscription_data: { metadata },
       success_url: `${origin}/dashboard`,
       cancel_url: `${origin}/planos`,
       allow_promotion_codes: true,
