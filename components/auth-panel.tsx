@@ -72,6 +72,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
         window.turnstile.render(captchaRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "dark",
+          size: "flexible",
           callback: (token) => setCaptchaToken(token),
           "expired-callback": () => setCaptchaToken(null),
           "error-callback": () => setCaptchaToken(null),
@@ -207,7 +208,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
 
   return (
     <main className="grain relative min-h-[100svh] bg-navy text-ivory lg:h-[100svh] lg:overflow-hidden lg:grid lg:grid-cols-2">
-      <div className="flex flex-col px-6 py-6 md:px-12 lg:px-14 lg:py-8">
+      <div className="flex flex-col px-6 py-6 md:px-12 lg:px-14 lg:overflow-y-auto lg:py-8">
         <Link href="/" aria-label="Fostern, início">
           <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-48 md:w-56" />
         </Link>
@@ -359,8 +360,8 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
             )}
 
             {TURNSTILE_SITE_KEY && (
-              <div className="flex justify-center">
-                <div ref={captchaRef} />
+              <div className="flex w-full justify-center">
+                <div ref={captchaRef} className="w-full max-w-[300px]" />
               </div>
             )}
 
