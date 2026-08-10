@@ -11,6 +11,7 @@ import {
   completedCount,
 } from "@/lib/learning";
 import { useProgress } from "@/lib/use-progress";
+import { useActivePlan } from "@/lib/use-active-plan";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -90,10 +91,12 @@ function ModuleOverview({
   progress,
   onOpenLesson,
   onBack,
+  planoAtivo,
 }: {
   progress: ProgressMap;
   onOpenLesson: (id: string) => void;
   onBack: () => void;
+  planoAtivo: boolean;
 }) {
   const done = completedCount(progress);
   const pct = Math.round((done / MODULE.totalLessons) * 100);
@@ -117,6 +120,23 @@ function ModuleOverview({
   return (
     <div className="min-h-[100svh] bg-ivory">
       <TopBar progress={progress} onBack={onBack} />
+
+      {!planoAtivo && (
+        <div className="bg-navy text-ivory">
+          <div className="mx-auto flex w-[min(100%-32px,1000px)] flex-wrap items-center gap-x-4 gap-y-2 py-4">
+            <p className="flex items-center gap-2.5 text-[12px] font-semibold">
+              <Icon d={icons.spark} className="h-4 w-4 text-gold" />
+              Você está no plano gratuito: aulas 1 e 2 disponíveis.
+            </p>
+            <Link
+              href="/planos"
+              className="ml-auto inline-flex min-h-9 items-center gap-2 border border-gold bg-gold px-4 text-[10px] font-bold text-navy transition-colors hover:bg-gold/90"
+            >
+              Assinar para liberar tudo <Icon d={icons.arrow} className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto w-[min(100%-32px,1000px)] py-10 md:py-16">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
@@ -192,13 +212,22 @@ function ModuleOverview({
               }
               return (
                 <li key={`locked-${item.number}`} className="border-b border-mist/80 px-5 py-4 last:border-0 md:px-7">
-                  <div className="flex items-center gap-4 opacity-60">
+                  <div className="flex items-center gap-4">
                     <StatusMark state="locked" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[9px] font-bold uppercase tracking-[.14em] text-graphite/40">Aula {item.number}</span>
                       <span className="mt-0.5 block truncate text-[14px] font-semibold leading-snug text-graphite/70">{item.title}</span>
                     </span>
-                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-[.12em] text-graphite/40">Em breve</span>
+                    {planoAtivo ? (
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-[.12em] text-graphite/40">Em breve</span>
+                    ) : (
+                      <Link
+                        href="/planos"
+                        className="inline-flex shrink-0 items-center gap-2 border border-gold bg-gold px-3.5 py-2 text-[10px] font-bold text-navy transition-colors hover:bg-gold/90"
+                      >
+                        Assinar <Icon d={icons.arrow} className="h-3 w-3" />
+                      </Link>
+                    )}
                   </div>
                 </li>
               );
@@ -567,6 +596,7 @@ function LessonView({
 
 export default function LearnPage() {
   const { progress, complete } = useProgress();
+  const { loading: carregandoPlano, ativo: planoAtivo } = useActivePlan();
   const [view, setView] = useState<View>({ name: "module" });
 
   const activeLesson = view.name === "lesson" ? MODULE.lessons.find((lesson) => lesson.id === view.lessonId) : undefined;
@@ -587,6 +617,7 @@ export default function LearnPage() {
       ) : (
         <ModuleOverview
           progress={progress}
+          planoAtivo={!carregandoPlano && planoAtivo}
           onBack={() => {
             window.location.href = "/dashboard";
           }}

@@ -29,30 +29,48 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isLearn = request.nextUrl.pathname.startsWith("/dashboard/aprender");
+  const isPlanos = request.nextUrl.pathname.startsWith("/planos");
   const isRoot = request.nextUrl.pathname === "/";
 
-  if (!user && isDashboard) {
+  const redirect = (path: string, params?: Record<string, string>) => {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth";
-    url.searchParams.set("mode", "login");
+    url.pathname = path;
+    for (const [k, v] of Object.entries(params ?? {})) url.searchParams.set(k, v);
     return NextResponse.redirect(url);
+  };
+
+  if (!user && (isDashboard || isPlanos)) {
+    return redirect("/auth", { mode: "login" });
   }
 
   if (user && isAuthPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return redirect("/dashboard");
   }
 
   if (user && isRoot) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return redirect("/dashboard");
+  }
+
+  // A área do estudante só é liberada para quem tem plano ativo.
+  // Aulas de amostra (/dashboard/aprender) ficam abertas para o plano gratuito.
+  if (user && isDashboard && !isLearn) {
+    const agora = new Date().toISOString();
+    const { data } = await supabase
+      .from("assinaturas")
+      .select("id")
+      .eq("usuario_id", user.id)
+      .eq("status", "ativa")
+      .gt("termino_em", agora)
+      .limit(1);
+    if (!data || data.length === 0) {
+      return redirect("/planos");
+    }
   }
 
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/", "/auth/:path*", "/dashboard/:path*"],
+  matcher: ["/", "/auth/:path*", "/dashboard/:path*", "/planos"],
 };

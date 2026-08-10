@@ -60,25 +60,25 @@ const plans = [
     name: "Gratuito",
     price: "R$0",
     period: "",
-    description: "Pra começar a organizar sua jornada.",
-    features: ["Diagnóstico inicial de perfil", "Roadmap básico", "Acesso ao Caderno Fostern"],
+    description: "Pra começar: as primeiras aulas do módulo 1.",
+    features: ["Aulas 1 e 2 do módulo 1", "Exercícios com correção", "Entenda o que as admissões procuram"],
     cta: "Começar grátis",
     highlight: false
   },
   {
     name: "Mensal",
-    price: "R$24,90",
+    price: "R$29,90",
     period: "/mês",
     description: "Acesso completo, mês a mês.",
-    features: ["Tudo do plano Gratuito", "Mentoria individual", "IA de acompanhamento contínuo", "Revisão de redações e projetos"],
+    features: ["Tudo do plano Gratuito", "Módulo 1 completo (8 aulas)", "Estratégia para SAT e TOEFL", "Mentoria individual"],
     cta: "Assinar mensal",
     highlight: true
   },
   {
     name: "Anual",
-    price: "R$199",
+    price: "R$199,90",
     period: "/ano",
-    description: "O mesmo acesso completo, com desconto.",
+    description: "O mesmo acesso completo, à vista.",
     features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria"],
     cta: "Assinar anual",
     highlight: false
@@ -384,7 +384,6 @@ export function FosternLanding() {
               <p className="text-[10px] font-bold uppercase tracking-[.14em] text-deep-navy">Planos</p>
               <div>
                 <h2 className="max-w-3xl font-serif text-[clamp(2.8rem,5vw,5rem)] leading-[.94] tracking-[-.045em] text-navy">Escolha o ritmo <em className="not-italic text-deep-navy">certo pra você.</em></h2>
-                <p className="mt-4 text-[9px] font-bold uppercase tracking-[.1em] text-gold">Exemplo — recursos de cada plano ainda em definição</p>
               </div>
             </Reveal>
             <div className="grid gap-6 md:grid-cols-3">
