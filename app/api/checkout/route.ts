@@ -40,31 +40,25 @@ export async function POST(request: Request) {
   const metadata = { usuario_id: user.id, plano_slug: plano.slug };
 
   try {
-    const isRecorrente = plano.periodo === "mensal";
+    const recorrente = plano.periodo !== "avulso";
+    const intervalo = plano.periodo === "anual" ? "year" : "month";
     const session = await getStripe().checkout.sessions.create({
-      mode: isRecorrente ? "subscription" : "payment",
+      mode: "subscription",
       customer_email: user.email ?? undefined,
       metadata,
       line_items: [
         {
           quantity: 1,
-          price_data: isRecorrente
-            ? {
-                currency: "brl",
-                unit_amount: plano.preco_centavos,
-                recurring: { interval: "month" },
-                product_data: { name: `Fostern · ${plano.nome}` },
-              }
-            : {
-                currency: "brl",
-                unit_amount: plano.preco_centavos,
-                product_data: { name: `Fostern · ${plano.nome}` },
-              },
+          price_data: {
+            currency: "brl",
+            unit_amount: plano.preco_centavos,
+            recurring: { interval: intervalo },
+            product_data: { name: `Fostern · ${plano.nome}` },
+          },
         },
       ],
-      subscription_data: isRecorrente ? { metadata } : undefined,
-      payment_intent_data: isRecorrente ? undefined : { metadata },
-      success_url: `${origin}/dashboard/aprender?pago=1`,
+      subscription_data: recorrente ? { metadata } : undefined,
+      success_url: `${origin}/dashboard`,
       cancel_url: `${origin}/planos`,
       allow_promotion_codes: true,
     });

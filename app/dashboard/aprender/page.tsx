@@ -594,16 +594,71 @@ function LessonView({
   );
 }
 
+function FreeCompleteScreen({ progress, onBack }: { progress: ProgressMap; onBack: () => void }) {
+  return (
+    <div className="min-h-[100svh] bg-ivory">
+      <TopBar progress={progress} onBack={onBack} />
+      <div className="grid min-h-[calc(100svh-56px)] place-items-center px-4 py-14">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: EASE }}
+          className="w-full max-w-[560px]"
+        >
+          <div className="rounded-lg border border-mist bg-white p-8 text-center md:p-10">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-navy text-gold">
+              <Icon d={icons.check} className="h-6 w-6" />
+            </span>
+            <p className="mt-6 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Aulas gratuitas concluídas</p>
+            <h1 className="mt-3 font-serif text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.02] tracking-[-.035em] text-navy">
+              Módulos finalizados.
+            </h1>
+            <p className="mx-auto mt-4 max-w-[420px] text-[14px] leading-7 text-graphite/75">
+              Você terminou as duas aulas de amostra do módulo 1. O caminho completo — testes, ensaios, mentoria e as aulas 3 a 8 —
+              continua nos planos pagos.
+            </p>
+
+            <Link
+              href="/planos"
+              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-3 border border-gold bg-gold px-6 text-[11px] font-bold text-navy transition-colors duration-300 hover:bg-gold/90"
+            >
+              Ver planos e continuar <Icon d={icons.arrow} className="h-4 w-4" />
+            </Link>
+            <button
+              type="button"
+              onClick={onBack}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 border border-mist bg-white px-6 text-[11px] font-bold text-navy transition-colors duration-300 hover:border-gold hover:text-gold"
+            >
+              <Icon d={icons.back} className="h-4 w-4" /> Rever as aulas grátis
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 export default function LearnPage() {
-  const { progress, complete } = useProgress();
+  const { progress, complete, ready } = useProgress();
   const { loading: carregandoPlano, ativo: planoAtivo } = useActivePlan();
   const [view, setView] = useState<View>({ name: "module" });
 
   const activeLesson = view.name === "lesson" ? MODULE.lessons.find((lesson) => lesson.id === view.lessonId) : undefined;
 
+  const freeLessonsFeitas = MODULE.lessons.every((lesson) => progress[lesson.id]);
+  const mostrarConclusaoFree = !carregandoPlano && !planoAtivo && ready && freeLessonsFeitas && view.name === "module";
+
   return (
     <>
-      {view.name === "lesson" && activeLesson ? (
+      {mostrarConclusaoFree ? (
+        <FreeCompleteScreen
+          progress={progress}
+          onBack={() => {
+            setView({ name: "module" });
+            window.scrollTo({ top: 0 });
+          }}
+        />
+      ) : view.name === "lesson" && activeLesson ? (
         <LessonView
           lesson={activeLesson}
           progress={progress}

@@ -78,7 +78,7 @@ const plans = [
     name: "Anual",
     price: "R$199,90",
     period: "/ano",
-    description: "O mesmo acesso completo, à vista.",
+    description: "O mesmo acesso completo, com renovação automática.",
     features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria"],
     cta: "Assinar anual",
     highlight: false

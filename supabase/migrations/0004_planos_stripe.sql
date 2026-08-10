@@ -9,7 +9,7 @@ insert into public.planos (nome, slug, descricao, preco_centavos, periodo, desta
 values
   ('Gratuito', 'gratuito', 'Pra começar: as primeiras aulas do módulo 1, sem custo.', 0, 'avulso', false, true),
   ('Mensal', 'mensal', 'Acesso completo à plataforma, mês a mês.', 2990, 'mensal', true, true),
-  ('Anual', 'anual', 'Acesso completo por um ano, pagamento único à vista.', 19990, 'anual', false, true)
+  ('Anual', 'anual', 'Acesso completo por um ano, com renovação automática.', 19990, 'anual', false, true)
 on conflict (slug) do update set
   nome = excluded.nome,
   descricao = excluded.descricao,
