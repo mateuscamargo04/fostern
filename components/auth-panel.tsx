@@ -208,12 +208,12 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
 
   return (
     <main className="grain relative min-h-[100svh] bg-navy text-ivory lg:h-[100svh] lg:overflow-hidden lg:grid lg:grid-cols-2">
-      <div className="flex flex-col px-6 py-6 md:px-12 lg:px-14 lg:overflow-y-auto lg:py-8">
+      <div className="flex flex-col px-6 py-6 md:px-12 lg:px-14 lg:overflow-y-auto lg:py-5">
         <Link href="/" aria-label="Fostern, início">
-          <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-48 md:w-56" />
+          <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-44 md:w-48" />
         </Link>
 
-        <div className="flex flex-1 flex-col justify-center py-4">
+        <div className="flex flex-1 flex-col justify-center py-2">
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -222,11 +222,11 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
               exit={{ opacity: 0, y: -14 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional</p>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Preparação internacional</p>
               <h1 className="max-w-[400px] font-serif text-[clamp(2rem,3.8vw,2.9rem)] leading-[.98] tracking-[-.04em]">
                 {isRegister ? "Comece sua jornada." : "Bem-vindo de volta."}
               </h1>
-              <p className="mt-3 max-w-[380px] text-[13px] leading-6 text-ivory/70">
+              <p className="mt-2 max-w-[380px] text-[13px] leading-6 text-ivory/70">
                 {isRegister
                   ? "Crie sua conta para acompanhar seu plano, sua mentoria e o seu Caderno Fostern."
                   : "Entre para continuar sua preparação de onde parou."}
@@ -234,13 +234,13 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
             </motion.div>
           </AnimatePresence>
 
-          <div className="mt-8 flex gap-12 border-b border-white/15">
+          <div className="mt-6 flex gap-12 border-b border-white/15">
             {(["login", "register"] as Mode[]).map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => switchMode(item)}
-                className={`-mb-px border-b-2 pb-3 text-[11px] font-bold uppercase tracking-[.14em] transition-colors ${
+                className={`-mb-px border-b-2 pb-2.5 text-[11px] font-bold uppercase tracking-[.14em] transition-colors ${
                   mode === item ? "border-gold text-ivory" : "border-transparent text-ivory/45 hover:text-ivory/75"
                 }`}
               >
@@ -249,7 +249,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
             ))}
           </div>
 
-          <form onSubmit={submit} className="mt-6 flex flex-col gap-5">
+          <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
             <AnimatePresence initial={false}>
               {isRegister && (
                 <motion.div
@@ -375,7 +375,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
             </button>
           </form>
 
-          <div className="my-6 flex items-center gap-4">
+          <div className="my-4 flex items-center gap-4">
             <span className="h-px flex-1 bg-white/15" />
             <span className="text-[9px] font-bold uppercase tracking-[.18em] text-ivory/40">ou</span>
             <span className="h-px flex-1 bg-white/15" />
@@ -391,7 +391,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
             Continuar com Google
           </button>
 
-          <p className="mt-6 max-w-[400px] text-[10px] leading-5 text-ivory/40">
+          <p className="mt-4 max-w-[400px] text-[10px] leading-5 text-ivory/40">
             Ao continuar, você concorda com os Termos de Uso e a Política de Privacidade da Fostern.
           </p>
         </div>
