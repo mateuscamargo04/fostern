@@ -9,16 +9,19 @@ $root = Split-Path -Parent $PSScriptRoot
 $envPath = Join-Path $root ".env.local"
 
 $url = $null
+$key = $null
 if (Test-Path $envPath) {
   Get-Content $envPath | ForEach-Object {
     if ($_ -match "^NEXT_PUBLIC_SUPABASE_URL=(.+)$") { $url = $matches[1].Trim() }
+    if ($_ -match "^SUPABASE_SERVICE_ROLE_KEY=(.+)$") { $key = $matches[1].Trim() }
   }
 }
 if (-not $url) {
   $url = Read-Host "Project URL (https://xxxx.supabase.co)"
 }
-
-$key = (Read-Host "Cole a SERVICE_ROLE key (secret)").Trim()
+if (-not $key) {
+  $key = (Read-Host "Cole a SERVICE_ROLE key (secret)").Trim()
+}
 if (-not $key) { Write-Error "Chave obrigatoria."; exit 1 }
 
 $tables = @("perfis", "planos", "assinaturas", "pagamentos", "modulos", "aulas", "progresso_aulas", "mentorias", "documentos")
