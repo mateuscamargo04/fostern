@@ -642,11 +642,12 @@ export default function LearnPage() {
   const { progress, complete, ready } = useProgress();
   const { loading: carregandoPlano, ativo: planoAtivo } = useActivePlan();
   const [view, setView] = useState<View>({ name: "module" });
+  const [revisando, setRevisando] = useState(false);
 
   const activeLesson = view.name === "lesson" ? MODULE.lessons.find((lesson) => lesson.id === view.lessonId) : undefined;
 
   const freeLessonsFeitas = MODULE.lessons.every((lesson) => progress[lesson.id]);
-  const mostrarConclusaoFree = !carregandoPlano && !planoAtivo && ready && freeLessonsFeitas && view.name === "module";
+  const mostrarConclusaoFree = !carregandoPlano && !planoAtivo && ready && freeLessonsFeitas && view.name === "module" && !revisando;
 
   return (
     <>
@@ -654,6 +655,7 @@ export default function LearnPage() {
         <FreeCompleteScreen
           progress={progress}
           onBack={() => {
+            setRevisando(true);
             setView({ name: "module" });
             window.scrollTo({ top: 0 });
           }}
@@ -665,6 +667,7 @@ export default function LearnPage() {
           onComplete={complete}
           onBack={() => setView({ name: "module" })}
           onOpenLesson={(id) => {
+            setRevisando(false);
             setView({ name: "lesson", lessonId: id });
             window.scrollTo({ top: 0 });
           }}
@@ -677,6 +680,7 @@ export default function LearnPage() {
             window.location.href = "/dashboard";
           }}
           onOpenLesson={(id) => {
+            setRevisando(false);
             setView({ name: "lesson", lessonId: id });
             window.scrollTo({ top: 0 });
           }}
