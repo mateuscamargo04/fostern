@@ -162,7 +162,10 @@ export default function DocumentosPage() {
           />
         </div>
         <p className="mt-2 max-w-[520px] text-[12px] leading-5 text-graphite/55">
-          Ensaio, currículo, histórico ou qualquer outro arquivo da sua preparação. PDF, DOC/DOCX, TXT, PNG e JPG · até 20 MB.
+          Guarde ensaio, currículo, histórico escolar e comprovantes da sua preparação em um só lugar — seguro e acessível de qualquer dispositivo.
+        </p>
+        <p className="mt-2 max-w-[520px] text-[11px] leading-5 text-graphite/45">
+          Formatos: PDF, DOC/DOCX, TXT, PNG e JPG · até 20 MB por arquivo.
         </p>
       </motion.div>
 
@@ -181,7 +184,7 @@ export default function DocumentosPage() {
               <Icon d={icons.file} className="h-5 w-5" />
             </span>
             <p className="mt-4 text-[13px] font-semibold text-navy">Nenhum documento ainda.</p>
-            <p className="mt-1 text-[12px] leading-5 text-graphite/55">Envie seu primeiro arquivo para começar.</p>
+            <p className="mt-1 text-[12px] leading-5 text-graphite/55">Salve o ensaio, o currículo e os comprovantes que você vai usar nas candidaturas.</p>
           </div>
         ) : (
           <ul className="divide-y divide-mist/80">

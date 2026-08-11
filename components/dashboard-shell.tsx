@@ -17,6 +17,7 @@ const mainNav: NavItem[] = [
   { href: "/dashboard/mentoria", label: "Mentoria", d: "M2.5 20.5c.8-3 3-4.5 5-4.5s4.2 1.5 5 4.5M7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM16 6.5a3.5 3.5 0 1 0-1.2 2.7M14.5 16.6c1.8-.4 3.8 0 5 1.9M19 4.5l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" },
   { href: "/dashboard/financas", label: "Finanças", d: "M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5zM3.5 10h17M16.5 14.5h2" },
   { href: "/dashboard/comunidade", label: "Comunidade", d: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z" },
+  { href: "/dashboard/tutora", label: "Tutora IA", d: "M4 4h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-4.5 4.5V8a4 4 0 0 1 4-4H4zM8.5 9h7M8.5 13h4" },
 ];
 
 const accountNav: NavItem[] = [
@@ -33,16 +34,13 @@ function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: s
 }
 
 function Avatar({ user, size = "h-9 w-9 text-[13px]" }: { user: UsuarioLogado | null; size?: string }) {
-  if (user?.avatarUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={user.avatarUrl} alt={user.name} className={`shrink-0 rounded-full object-cover ${size}`} />
-    );
-  }
   return (
-    <span className={`grid shrink-0 place-items-center rounded-full bg-gold font-serif font-semibold text-navy ${size}`}>
-      {user?.initials ?? "ES"}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={user?.avatarUrl || "/images/avatar-default.svg"}
+      alt={user?.name || "Foto de perfil"}
+      className={`shrink-0 rounded-full object-cover ${size}`}
+    />
   );
 }
 
@@ -89,6 +87,12 @@ function MentorCard() {
       <p className="text-[9px] font-bold uppercase tracking-[.14em] text-gold">Próxima mentoria</p>
       <p className="mt-2 text-[12px] font-semibold text-ivory/80">Nenhuma agendada</p>
       <p className="mt-0.5 text-[10px] leading-4 text-ivory/45">As sessões aparecem aqui quando forem marcadas.</p>
+      <Link
+        href="/dashboard/mentoria"
+        className="mt-3 inline-flex w-full items-center justify-center border border-white/15 py-2 text-[10px] font-bold uppercase tracking-[.14em] text-gold transition-colors hover:border-gold"
+      >
+        Agendar mentoria
+      </Link>
     </div>
   );
 }
@@ -118,9 +122,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const isLearn = pathname.startsWith("/dashboard/aprender");
-  if (isLearn) return <>{children}</>;
 
   const signOut = async () => {
     await createClient().auth.signOut();

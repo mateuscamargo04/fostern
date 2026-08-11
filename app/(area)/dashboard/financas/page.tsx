@@ -128,7 +128,7 @@ export default function FinancasPage() {
           Finanças<span className="text-gold">.</span>
         </h1>
         <p className="mt-2 max-w-[520px] text-[12px] leading-5 text-graphite/55">
-          Acompanhe seu plano e o histórico de pagamentos.
+          Veja o status da sua assinatura, quando ela renova e o histórico de cobranças da Fostern.
         </p>
       </motion.div>
 
@@ -167,7 +167,7 @@ export default function FinancasPage() {
                   <Icon d={icons.receipt} className="h-5 w-5" />
                 </span>
                 <p className="mt-4 text-[13px] font-semibold text-navy">Nenhum pagamento ainda.</p>
-                <p className="mt-1 text-[12px] leading-5 text-graphite/55">Os pagamentos da sua assinatura vão aparecer aqui.</p>
+                <p className="mt-1 text-[12px] leading-5 text-graphite/55">Ao assinar, cada cobrança e reembolso aparecem aqui com data e valor.</p>
               </div>
             ) : (
               <ul className="divide-y divide-mist/80">

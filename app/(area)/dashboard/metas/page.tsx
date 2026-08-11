@@ -73,14 +73,17 @@ export default function MetasPage() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroCarregar, setErroCarregar] = useState<string | null>(null);
 
   const carregar = async () => {
+    setErroCarregar(null);
     const supabase = createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) return;
-    const { data } = await supabase.from("universidades").select("*").order("nota", { ascending: false }).order("nome");
+    const { data, error } = await supabase.from("universidades").select("*").order("nota", { ascending: false }).order("nome");
+    if (error) setErroCarregar(error.message);
     if (data) setUniversidades(data as Universidade[]);
     setCarregando(false);
   };
@@ -260,6 +263,17 @@ export default function MetasPage() {
         <motion.section {...fade} transition={{ duration: 0.7, delay: 0.14, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white lg:col-span-2">
           {carregando ? (
             <p className="p-6 text-[12px] text-graphite/55">Carregando…</p>
+          ) : erroCarregar ? (
+            <div className="p-10 text-center">
+              <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#FBF1EC] text-[#C96A52]">
+                <Icon d={icons.pin} className="h-5 w-5" />
+              </span>
+              <p className="mt-4 text-[13px] font-semibold text-navy">Não foi possível carregar.</p>
+              <p className="mt-1 text-[12px] leading-5 text-graphite/55">{erroCarregar}</p>
+              <button type="button" onClick={carregar} className="mt-4 border border-gold bg-gold px-4 py-2 text-[11px] font-bold text-navy hover:bg-gold/90">
+                Tentar novamente
+              </button>
+            </div>
           ) : universidades.length === 0 ? (
             <div className="p-10 text-center">
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-navy text-gold">
