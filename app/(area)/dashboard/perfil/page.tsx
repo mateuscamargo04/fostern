@@ -134,8 +134,9 @@ export default function PerfilPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.avatarUrl} alt={user.name} className="h-20 w-20 shrink-0 rounded-full object-cover" />
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src="/images/avatar-default.svg" alt="Foto de perfil padrão" className="h-20 w-20 shrink-0 rounded-full object-cover" />
+              <span className="grid h-20 w-20 shrink-0 select-none place-items-center rounded-full bg-gold text-[26px] font-bold text-navy">
+                {user?.initials ?? "F"}
+              </span>
             )}
             <div className="flex flex-col gap-2.5">
               <button

@@ -97,6 +97,28 @@ export default function MentoriaPage() {
     });
     setSalvando(false);
     if (error) return setErro(error.message);
+
+    const { data: pref } = await supabase
+      .from("preferencias")
+      .select("email_mentoria")
+      .eq("usuario_id", session.user.id)
+      .maybeSingle();
+    if (pref?.email_mentoria !== false) {
+      const quando = new Date(agendadaPara).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      await supabase.from("notificacoes").insert({
+        usuario_id: session.user.id,
+        tipo: "mentoria",
+        titulo: "Mentoria agendada",
+        corpo: `${quando} · ${duracao} min de sessão`,
+        link: "/dashboard/mentoria",
+      });
+    }
+
     setTema("");
     setAgendadaPara(nowLocal());
     setOk("Mentoria agendada. Você receberá o link da chamada por e-mail.");

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ReactNode, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser, type UsuarioLogado } from "@/lib/use-user";
+import { NotificationBell } from "@/components/notification-bell";
 
 type NavItem = { href: string; label: string; d: string };
 
@@ -33,12 +34,19 @@ function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: s
   );
 }
 
-function Avatar({ user, size = "h-9 w-9 text-[13px]" }: { user: UsuarioLogado | null; size?: string }) {
+function Avatar({ user, size = "h-9 w-9 text-[11px]" }: { user: UsuarioLogado | null; size?: string }) {
+  if (!user?.avatarUrl) {
+    return (
+      <span className={`grid shrink-0 select-none place-items-center rounded-full bg-gold font-bold text-navy ${size}`}>
+        {user?.initials || "F"}
+      </span>
+    );
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={user?.avatarUrl || "/images/avatar-default.svg"}
-      alt={user?.name || "Foto de perfil"}
+      src={user.avatarUrl}
+      alt={user.name || "Foto de perfil"}
       className={`shrink-0 rounded-full object-cover ${size}`}
     />
   );
@@ -63,7 +71,7 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
   const isActive = (item: NavItem) =>
     item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
   return (
-    <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4">
+    <div className="no-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto px-4">
       <nav className="space-y-1">
         {mainNav.map((item) => (
           <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
@@ -142,7 +150,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-[100svh] bg-mist/40 text-graphite">
+    <div className="flex min-h-[100svh] overflow-x-clip bg-mist/40 text-graphite">
       <aside className="sticky top-0 hidden h-[100svh] w-[248px] shrink-0 flex-col bg-navy text-ivory lg:flex">
         <div className="px-7 pb-6 pt-7">
           <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
@@ -216,12 +224,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3" className="h-3.5 w-3.5" />
               Buscar material, tarefa…
             </div>
-            <button className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-ivory/80 transition-colors hover:border-gold hover:text-gold">
-              <Icon d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-gold" />
-            </button>
+            <NotificationBell />
             <Link href="/dashboard/perfil" aria-label="Perfil">
-              <Avatar user={user} size="h-10 w-10 text-[13px]" />
+              <Avatar user={user} size="h-10 w-10 text-[12px]" />
             </Link>
           </div>
         </header>

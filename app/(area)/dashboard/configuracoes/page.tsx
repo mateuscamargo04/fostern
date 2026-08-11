@@ -265,7 +265,7 @@ export default function ConfiguracoesPage() {
 
         <motion.section {...fade} transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="rounded-lg border border-mist bg-white p-5 md:p-6 lg:col-span-2">
           <h2 className="font-serif text-[1.3rem] tracking-[-.02em] text-navy">Notificações</h2>
-          <p className="mt-1.5 text-[12px] leading-5 text-graphite/55">Escolha o que você quer receber no seu e-mail ({user?.email ?? "seu e-mail"}).</p>
+          <p className="mt-1.5 text-[12px] leading-5 text-graphite/55">Escolha o que você quer receber aqui no app e, quando disponível, no e-mail ({user?.email ?? "seu e-mail"}).</p>
           <div className="mt-5 divide-y divide-transparent">
             <Toggle
               checked={prefs.email_mentoria}

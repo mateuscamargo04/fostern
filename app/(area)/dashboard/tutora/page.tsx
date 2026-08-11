@@ -113,7 +113,7 @@ export default function TutoraPage() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-[calc(100svh-136px)] min-h-[520px] flex-col md:h-[calc(100svh-152px)]">
       <motion.div {...fade}>
         <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Estudo com IA</p>
         <h1 className="mt-2 font-serif text-[clamp(1.9rem,3vw,2.6rem)] leading-[1] tracking-[-.03em] text-navy">
@@ -139,7 +139,7 @@ export default function TutoraPage() {
         </motion.div>
       )}
 
-      <div className="mt-6 flex flex-1 flex-col rounded-lg border border-mist bg-white">
+      <div className="mt-6 flex min-h-0 flex-1 flex-col rounded-lg border border-mist bg-white">
         {mensagens.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
             <span className="grid h-14 w-14 place-items-center rounded-full bg-navy text-gold">
@@ -163,7 +163,7 @@ export default function TutoraPage() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 space-y-5 overflow-y-auto px-5 py-6 md:px-8">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6 md:px-8">
             {mensagens.map((mensagem, index) =>
               mensagem.papel === "usuario" ? (
                 <div key={index} className="flex justify-end">

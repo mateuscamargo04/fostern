@@ -37,7 +37,7 @@ export function useUser() {
       .maybeSingle();
     if (data) {
       nome = nome ?? data.nome ?? undefined;
-      avatarUrl = avatarUrl ?? data.avatar_url ?? undefined;
+      avatarUrl = data.avatar_url ?? avatarUrl;
     }
     const full = nome ?? session.user.email?.split("@")[0] ?? "Estudante";
     const firstName = full.split(" ")[0];
