@@ -115,6 +115,7 @@ export default function Dashboard() {
   const [universidades, setUniversidades] = useState<Universidade[]>([]);
   const [mentorias, setMentorias] = useState<Mentoria[]>([]);
   const [dadosCarregando, setDadosCarregando] = useState(true);
+  const [modulosVisiveis, setModulosVisiveis] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -289,10 +290,21 @@ export default function Dashboard() {
             <h2 className="font-serif text-[1.45rem] tracking-[-.02em] text-navy">Seus módulos</h2>
             <p className="mt-1 text-[12px] text-graphite/55">10 módulos, da base até a decisão final. {TOTAL_LESSONS} aulas no total.</p>
           </div>
-          <Link href="/dashboard/aprender" className="text-[11px] font-bold text-gold hover:text-navy">Ver trilha completa →</Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setModulosVisiveis((v) => !v)}
+              aria-expanded={modulosVisiveis}
+              className="text-[11px] font-bold text-graphite/50 transition-colors hover:text-navy"
+            >
+              {modulosVisiveis ? "Ocultar módulos" : "Mostrar módulos"}
+            </button>
+            <Link href="/dashboard/aprender" className="text-[11px] font-bold text-gold hover:text-navy">Ver trilha completa →</Link>
+          </div>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {MODULES.map((module, index) => {
+        {modulosVisiveis && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {MODULES.map((module, index) => {
             const acessivel = isModuleAccessible(module, !!planoAtivo);
             const mDone = moduleDoneCount(module, learning);
             const mPct = Math.round((mDone / module.totalLessons) * 100);
@@ -331,7 +343,8 @@ export default function Dashboard() {
               </Link>
             );
           })}
-        </div>
+          </div>
+        )}
       </motion.section>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
