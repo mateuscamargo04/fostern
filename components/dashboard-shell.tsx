@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser, type UsuarioLogado } from "@/lib/use-user";
 import { NotificationBell } from "@/components/notification-bell";
+import { MODULES } from "@/lib/learning";
 
 type NavItem = { href: string; label: string; d: string };
 
@@ -35,7 +36,8 @@ function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: s
 }
 
 function Avatar({ user, size = "h-9 w-9 text-[11px]" }: { user: UsuarioLogado | null; size?: string }) {
-  if (!user?.avatarUrl) {
+  const [erro, setErro] = useState(false);
+  if (!user?.avatarUrl || erro) {
     return (
       <span className={`grid shrink-0 select-none place-items-center rounded-full bg-gold font-bold text-navy ${size}`}>
         {user?.initials || "F"}
@@ -48,6 +50,7 @@ function Avatar({ user, size = "h-9 w-9 text-[11px]" }: { user: UsuarioLogado | 
       src={user.avatarUrl}
       alt={user.name || "Foto de perfil"}
       className={`shrink-0 rounded-full object-cover ${size}`}
+      onError={() => setErro(true)}
     />
   );
 }
@@ -105,6 +108,224 @@ function MentorCard() {
   );
 }
 
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+const tipoLabel: Record<string, string> = {
+  ensaio: "Ensaio",
+  curriculo: "Currículo",
+  historico: "Histórico",
+  outro: "Documento",
+};
+
+type ResultadoBusca = {
+  id: string;
+  titulo: string;
+  meta: string;
+  href: string;
+  grupo: string;
+  d: string;
+};
+
+const iconsBusca = {
+  aula: "M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6.6 5.5 5.5 0 0 1 21.5 12C19 16.5 12 21 12 21z",
+  uni: "M12 2.5 3 6.5v5c0 5 3.8 8.7 9 10 5.2-1.3 9-5 9-10v-5l-9-4zM8.5 12l2.5 2.5 4.5-5",
+  doc: "M14 2.5H7a1.5 1.5 0 0 0-1.5 1.5v16A1.5 1.5 0 0 0 7 21.5h10a1.5 1.5 0 0 0 1.5-1.5V8zM14 2.5V8h5.5M9 13h6M9 17h6",
+  search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3",
+} as const;
+
+function BuscaModal({ aberto, onClose }: { aberto: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState("");
+  const [universidades, setUniversidades] = useState<{ id: string; nome: string; curso: string | null; pais: string | null }[]>([]);
+  const [documentos, setDocumentos] = useState<{ id: string; nome: string; tipo: string | null }[]>([]);
+
+  useEffect(() => {
+    if (!aberto) return;
+    setQuery("");
+    let active = true;
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+      const [unisRes, docsRes] = await Promise.all([
+        supabase.from("universidades").select("id, nome, curso, pais"),
+        supabase.from("documentos").select("id, nome, tipo"),
+      ]);
+      if (!active) return;
+      if (unisRes.data) setUniversidades(unisRes.data as { id: string; nome: string; curso: string | null; pais: string | null }[]);
+      if (docsRes.data) setDocumentos(docsRes.data as { id: string; nome: string; tipo: string | null }[]);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [aberto]);
+
+  useEffect(() => {
+    if (!aberto) return;
+    const timer = setTimeout(() => inputRef.current?.focus(), 40);
+    return () => clearTimeout(timer);
+  }, [aberto]);
+
+  const q = normalize(query);
+
+  const aulas: ResultadoBusca[] = q
+    ? MODULES.flatMap((m) =>
+        m.lessons
+          .filter((l) => normalize(`${l.title} ${l.tagline}`).includes(q))
+          .map((l) => ({
+            id: l.id,
+            titulo: l.title,
+            meta: `Módulo ${m.number} · Aula ${l.number} · ${l.duration}`,
+            href: `/dashboard/aprender?modulo=${m.slug}&aula=${l.id}`,
+            grupo: "Aulas",
+            d: iconsBusca.aula,
+          }))
+      ).slice(0, 6)
+    : [];
+
+  const unis: ResultadoBusca[] = q
+    ? universidades
+        .filter((u) => normalize(`${u.nome} ${u.curso ?? ""} ${u.pais ?? ""}`).includes(q))
+        .map((u) => ({
+          id: u.id,
+          titulo: u.nome,
+          meta: [u.curso, u.pais].filter(Boolean).join(" · ") || "Universidade-alvo",
+          href: "/dashboard/metas",
+          grupo: "Universidades",
+          d: iconsBusca.uni,
+        }))
+        .slice(0, 4)
+    : [];
+
+  const docs: ResultadoBusca[] = q
+    ? documentos
+        .filter((d) => normalize(`${d.nome} ${d.tipo ?? ""}`).includes(q))
+        .map((d) => ({
+          id: d.id,
+          titulo: d.nome,
+          meta: tipoLabel[d.tipo ?? ""] ?? "Documento",
+          href: "/dashboard/documentos",
+          grupo: "Documentos",
+          d: iconsBusca.doc,
+        }))
+        .slice(0, 4)
+    : [];
+
+  const total = aulas.length + unis.length + docs.length;
+
+  return (
+    <AnimatePresence>
+      {aberto && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[60] bg-navy/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-x-4 top-16 z-[70] mx-auto max-w-[560px] overflow-hidden rounded-lg border border-white/15 bg-navy text-ivory shadow-2xl"
+          >
+            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+              <Icon d={iconsBusca.search} className="h-4 w-4 shrink-0 text-gold" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") onClose();
+                  if (e.key === "Enter" && total > 0) {
+                    const primeira = aulas[0] ?? unis[0] ?? docs[0];
+                    router.push(primeira.href);
+                    onClose();
+                  }
+                }}
+                placeholder="Buscar material, tarefa…"
+                className="w-full bg-transparent text-[14px] text-ivory placeholder:text-ivory/40 focus:outline-none"
+              />
+              <span className="hidden shrink-0 rounded border border-white/20 px-2 py-1 text-[9px] font-bold uppercase tracking-[.12em] text-ivory/50 sm:block">Esc</span>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              {!q ? (
+                <div className="grid gap-1 p-4">
+                  <p className="px-3 pb-2 pt-1 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Sugestões</p>
+                  {[
+                    { label: "Ver todos os módulos", href: "/dashboard/aprender", d: iconsBusca.aula },
+                    { label: "Metas & universidades", href: "/dashboard/metas", d: iconsBusca.uni },
+                    { label: "Documentos", href: "/dashboard/documentos", d: iconsBusca.doc },
+                  ].map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className="flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-semibold text-ivory/75 transition-colors hover:bg-white/[.06] hover:text-gold"
+                    >
+                      <Icon d={item.d} className="h-4 w-4 text-gold" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : total === 0 ? (
+                <div className="px-6 py-10 text-center">
+                  <p className="text-[13px] font-semibold text-ivory/80">Nenhum resultado para “{query}”.</p>
+                  <p className="mt-1 text-[11px] text-ivory/45">Tente buscar por uma aula, universidade ou documento.</p>
+                </div>
+              ) : (
+                <div className="p-2">
+                  {[
+                    { grupo: "Aulas", itens: aulas },
+                    { grupo: "Universidades", itens: unis },
+                    { grupo: "Documentos", itens: docs },
+                  ].map(
+                    (secao) =>
+                      secao.itens.length > 0 && (
+                        <div key={secao.grupo} className="mb-1">
+                          <p className="px-3 pb-1.5 pt-2 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">{secao.grupo}</p>
+                          {secao.itens.map((item) => (
+                            <Link
+                              key={`${secao.grupo}-${item.id}`}
+                              href={item.href}
+                              onClick={onClose}
+                              className="flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-white/[.06]"
+                            >
+                              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md border border-white/10 text-gold">
+                                <Icon d={item.d} className="h-4 w-4" />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-[13px] font-semibold text-ivory">{item.titulo}</span>
+                                <span className="block truncate text-[11px] text-ivory/45">{item.meta}</span>
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function ProfileBlock({ user, onSignOut }: { user: UsuarioLogado | null; onSignOut: () => void }) {
   return (
     <div className="border-t border-white/10 px-4 py-5">
@@ -130,11 +351,30 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [buscaAberta, setBuscaAberta] = useState(false);
 
   const signOut = async () => {
     await createClient().auth.signOut();
     window.location.href = "/";
   };
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const alvo = event.target as HTMLElement | null;
+      const digitando = !!alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable);
+      if (buscaAberta && event.key === "Escape") {
+        setBuscaAberta(false);
+        return;
+      }
+      if (digitando) return;
+      if (event.key === "/" || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) {
+        event.preventDefault();
+        setBuscaAberta(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [buscaAberta]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -220,10 +460,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span className="font-semibold text-gold">{section?.label ?? "Dashboard"}</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-[12px] text-ivory/60 md:flex">
+            <button
+              type="button"
+              onClick={() => setBuscaAberta(true)}
+              className="hidden items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-[12px] text-ivory/60 transition-colors hover:border-gold hover:text-gold md:flex"
+            >
               <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3" className="h-3.5 w-3.5" />
               Buscar material, tarefa…
-            </div>
+              <span className="rounded border border-white/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[.1em] text-ivory/45">/</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBuscaAberta(true)}
+              aria-label="Buscar"
+              className="grid h-10 w-10 place-items-center border border-white/20 text-ivory/60 transition-colors hover:border-gold hover:text-gold md:hidden"
+            >
+              <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3" className="h-4 w-4" />
+            </button>
             <NotificationBell />
             <Link href="/dashboard/perfil" aria-label="Perfil">
               <Avatar user={user} size="h-10 w-10 text-[12px]" />
@@ -233,6 +486,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-8 md:px-10 md:py-10">{children}</main>
       </div>
+
+      <BuscaModal aberto={buscaAberta} onClose={() => setBuscaAberta(false)} />
     </div>
   );
 }

@@ -2,13 +2,18 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Block,
   Exercise,
   Lesson,
-  MODULE,
+  Module,
+  MODULES,
+  TOTAL_LESSONS,
   completedCount,
+  moduleDoneCount,
+  isModuleAccessible,
+  isLessonAccessible,
 } from "@/lib/learning";
 import { useProgress } from "@/lib/use-progress";
 import { useActivePlan } from "@/lib/use-active-plan";
@@ -16,7 +21,11 @@ import { useActivePlan } from "@/lib/use-active-plan";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 type ProgressMap = Record<string, boolean>;
-type View = { name: "module" } | { name: "lesson"; lessonId: string };
+
+type View =
+  | { name: "index" }
+  | { name: "module"; slug: string }
+  | { name: "lesson"; slug: string; lessonId: string };
 
 function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: string }) {
   return (
@@ -38,8 +47,17 @@ const icons = {
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5z",
 } as const;
 
-function TopBar({ progress, onBack }: { progress: ProgressMap; onBack: () => void }) {
-  const done = completedCount(progress);
+function TopBar({
+  done,
+  total,
+  label,
+  onBack,
+}: {
+  done: number;
+  total: number;
+  label: string;
+  onBack: () => void;
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-navy text-ivory">
       <div className="mx-auto flex h-14 w-[min(100%-32px,1200px)] items-center gap-3">
@@ -54,10 +72,10 @@ function TopBar({ progress, onBack }: { progress: ProgressMap; onBack: () => voi
         <div className="mx-auto flex min-w-0 items-center gap-2 text-[9px] font-bold uppercase tracking-[.14em] text-ivory/40">
           <span>Trilha</span>
           <span className="text-gold">·</span>
-          <span className="truncate text-gold">Módulo 1</span>
+          <span className="truncate text-gold">{label}</span>
         </div>
         <div className="flex items-center gap-2.5">
-          <span className="rounded-full border border-white/15 px-3 py-1 text-[10px] font-bold text-ivory/75">{done}/{MODULE.totalLessons} aulas</span>
+          <span className="rounded-full border border-white/15 px-3 py-1 text-[10px] font-bold text-ivory/75">{done}/{total} aulas</span>
           <span className="hidden h-9 w-9 items-center justify-center rounded-full bg-gold font-serif text-[12px] font-semibold text-navy sm:flex">LM</span>
         </div>
       </div>
@@ -76,7 +94,7 @@ function StatusMark({ state }: { state: "done" | "current" | "locked" }) {
   if (state === "current") {
     return (
       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-gold bg-navy font-serif text-[13px] font-semibold text-gold">
-        {0}
+        ·
       </span>
     );
   }
@@ -88,38 +106,25 @@ function StatusMark({ state }: { state: "done" | "current" | "locked" }) {
 }
 
 function ModuleOverview({
+  module,
   progress,
+  planoAtivo,
   onOpenLesson,
   onBack,
-  planoAtivo,
 }: {
+  module: Module;
   progress: ProgressMap;
+  planoAtivo: boolean;
   onOpenLesson: (id: string) => void;
   onBack: () => void;
-  planoAtivo: boolean;
 }) {
-  const done = completedCount(progress);
-  const pct = Math.round((done / MODULE.totalLessons) * 100);
-  const currentLesson = MODULE.lessons.find((lesson) => !progress[lesson.id]) ?? MODULE.lessons[0];
-
-  const items: (
-    | { type: "lesson"; lesson: Lesson; state: "done" | "current" }
-    | { type: "locked"; number: number; title: string; state: "locked" }
-  )[] = [
-    ...MODULE.lessons.map((lesson) => {
-      const state: "done" | "current" = progress[lesson.id] ? "done" : lesson.id === currentLesson.id ? "current" : "done";
-      return { type: "lesson" as const, lesson, state };
-    }),
-    ...MODULE.locked.map((locked) => ({ type: "locked" as const, number: locked.number, title: locked.title, state: "locked" as const })),
-  ].sort((a, b) => {
-    const na = a.type === "lesson" ? a.lesson.number : a.number;
-    const nb = b.type === "lesson" ? b.lesson.number : b.number;
-    return na - nb;
-  });
+  const done = moduleDoneCount(module, progress);
+  const pct = Math.round((done / module.totalLessons) * 100);
+  const currentLesson = module.lessons.find((lesson) => !progress[lesson.id]) ?? module.lessons[0];
 
   return (
     <div className="min-h-[100svh] bg-ivory">
-      <TopBar progress={progress} onBack={onBack} />
+      <TopBar done={done} total={module.totalLessons} label={`Módulo ${module.number}`} onBack={onBack} />
 
       {!planoAtivo && (
         <div className="bg-navy text-ivory">
@@ -141,15 +146,15 @@ function ModuleOverview({
       <div className="mx-auto w-[min(100%-32px,1000px)] py-10 md:py-16">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase tracking-[.14em]">
-            <span className="text-gold">{MODULE.eyebrow}</span>
+            <span className="text-gold">{module.eyebrow}</span>
             <span className="hidden h-px w-8 bg-gold/40 sm:block" />
-            <span className="text-graphite/50">{MODULE.totalLessons} aulas · {done} concluídas</span>
+            <span className="text-graphite/50">{module.totalLessons} aulas · {done} concluídas</span>
           </div>
 
           <h1 className="mt-5 max-w-[640px] font-serif text-[clamp(2.1rem,4vw,3.4rem)] leading-[.98] tracking-[-.04em] text-navy">
-            {MODULE.title}
+            {module.title}
           </h1>
-          <p className="mt-5 max-w-[520px] text-[14px] leading-7 text-graphite/75">{MODULE.description}</p>
+          <p className="mt-5 max-w-[520px] text-[14px] leading-7 text-graphite/75">{module.description}</p>
 
           <div className="mt-8 flex items-center gap-5">
             <div className="flex-1">
@@ -176,25 +181,27 @@ function ModuleOverview({
           </div>
 
           <ol>
-            {items.map((item, index) => {
-              if (item.type === "lesson") {
-                const isCurrent = item.state === "current";
-                return (
-                  <li key={item.lesson.id} className="border-b border-mist/80 last:border-0">
+            {module.lessons.map((lesson) => {
+              const acessivel = isLessonAccessible(module, lesson, planoAtivo);
+              const isDone = !!progress[lesson.id];
+              const isCurrent = acessivel && !isDone && lesson.id === currentLesson.id;
+              return (
+                <li key={lesson.id} className="border-b border-mist/80 last:border-0">
+                  {acessivel ? (
                     <button
                       type="button"
-                      onClick={() => onOpenLesson(item.lesson.id)}
+                      onClick={() => onOpenLesson(lesson.id)}
                       className={`group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-gold/[.04] md:px-7 ${isCurrent ? "bg-gold/[.05]" : ""}`}
                     >
-                      <StatusMark state={item.state} />
+                      <StatusMark state={isDone ? "done" : "current"} />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[9px] font-bold uppercase tracking-[.14em] text-gold">Aula {item.lesson.number}</span>
-                        <span className={`mt-0.5 block text-[14px] font-semibold leading-snug ${isCurrent ? "text-navy" : "text-navy/85"}`}>{item.lesson.title}</span>
+                        <span className="block text-[9px] font-bold uppercase tracking-[.14em] text-gold">Aula {lesson.number}</span>
+                        <span className={`mt-0.5 block text-[14px] font-semibold leading-snug ${isCurrent ? "text-navy" : "text-navy/85"}`}>{lesson.title}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2">
                         <span className="hidden items-center gap-1.5 text-[10px] font-semibold text-graphite/50 sm:flex">
                           <Icon d={icons.clock} className="h-3.5 w-3.5" />
-                          {item.lesson.duration}
+                          {lesson.duration}
                         </span>
                         {isCurrent ? (
                           <span className="inline-flex items-center gap-2 border border-gold bg-gold px-3.5 py-2 text-[10px] font-bold text-navy transition-transform duration-300 group-hover:translate-x-0.5">
@@ -207,28 +214,21 @@ function ModuleOverview({
                         )}
                       </span>
                     </button>
-                  </li>
-                );
-              }
-              return (
-                <li key={`locked-${item.number}`} className="border-b border-mist/80 px-5 py-4 last:border-0 md:px-7">
-                  <div className="flex items-center gap-4">
-                    <StatusMark state="locked" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[9px] font-bold uppercase tracking-[.14em] text-graphite/40">Aula {item.number}</span>
-                      <span className="mt-0.5 block truncate text-[14px] font-semibold leading-snug text-graphite/70">{item.title}</span>
-                    </span>
-                    {planoAtivo ? (
-                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-[.12em] text-graphite/40">Em breve</span>
-                    ) : (
+                  ) : (
+                    <div className="flex items-center gap-4 px-5 py-4 md:px-7">
+                      <StatusMark state="locked" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[9px] font-bold uppercase tracking-[.14em] text-graphite/40">Aula {lesson.number}</span>
+                        <span className="mt-0.5 block truncate text-[14px] font-semibold leading-snug text-graphite/70">{lesson.title}</span>
+                      </span>
                       <Link
                         href="/planos"
                         className="inline-flex shrink-0 items-center gap-2 border border-gold bg-gold px-3.5 py-2 text-[10px] font-bold text-navy transition-colors hover:bg-gold/90"
                       >
                         Assinar <Icon d={icons.arrow} className="h-3 w-3" />
                       </Link>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -237,7 +237,176 @@ function ModuleOverview({
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-6 flex items-center gap-3 text-[11px] text-graphite/50">
           <Icon d={icons.book} className="h-4 w-4 text-gold" />
-          Protótipo de demonstração — as aulas 3 a 8 serão abertas nos próximos módulos.
+          Protótipo de demonstração — as aulas dos módulos 2 a 10 são exemplos para ilustrar a trilha completa.
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function IndexView({
+  progress,
+  planoAtivo,
+  conclusaoFree,
+  onOpenModule,
+}: {
+  progress: ProgressMap;
+  planoAtivo: boolean;
+  conclusaoFree: boolean;
+  onOpenModule: (slug: string) => void;
+}) {
+  const done = completedCount(progress);
+  const pct = Math.round((done / TOTAL_LESSONS) * 100);
+
+  return (
+    <div className="min-h-[100svh] bg-ivory">
+      <TopBar done={done} total={TOTAL_LESSONS} label="Módulos" onBack={() => (window.location.href = "/dashboard")} />
+
+      {!planoAtivo && (
+        <div className="bg-navy text-ivory">
+          <div className="mx-auto flex w-[min(100%-32px,1000px)] flex-wrap items-center gap-x-4 gap-y-2 py-4">
+            <p className="flex items-center gap-2.5 text-[12px] font-semibold">
+              <Icon d={icons.spark} className="h-4 w-4 text-gold" />
+              Você está no plano gratuito: módulo 1, aulas 1 e 2 disponíveis.
+            </p>
+            <Link
+              href="/planos"
+              className="ml-auto inline-flex min-h-9 items-center gap-2 border border-gold bg-gold px-4 text-[10px] font-bold text-navy transition-colors hover:bg-gold/90"
+            >
+              Assinar para liberar tudo <Icon d={icons.arrow} className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-[min(100%-32px,1000px)] py-10 md:py-16">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase tracking-[.14em]">
+            <span className="text-gold">Minha jornada</span>
+            <span className="hidden h-px w-8 bg-gold/40 sm:block" />
+            <span className="text-graphite/50">{MODULES.length} módulos · {TOTAL_LESSONS} aulas</span>
+          </div>
+
+          <h1 className="mt-5 max-w-[640px] font-serif text-[clamp(2.1rem,4vw,3.4rem)] leading-[.98] tracking-[-.04em] text-navy">
+            Sua trilha de preparação<span className="text-gold">.</span>
+          </h1>
+          <p className="mt-5 max-w-[520px] text-[14px] leading-7 text-graphite/75">
+            Dez módulos, da base até a decisão final. Sem pressa — cada aula é um degrau. Conclua uma para liberar a próxima.
+          </p>
+
+          <div className="mt-8 flex items-center gap-5">
+            <div className="flex-1">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-[.12em]">
+                <span className="text-graphite/55">Progresso geral</span>
+                <span className="text-gold">{pct}%</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-mist">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.9, ease: EASE }} className="h-full rounded-full bg-gold" />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {conclusaoFree && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
+            className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gold/50 bg-gold/[.06] p-5 md:p-6"
+          >
+            <div className="flex items-start gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-navy text-gold">
+                <Icon d={icons.check} className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Aulas gratuitas concluídas</p>
+                <p className="mt-1.5 text-[13px] font-semibold text-navy">Você terminou as aulas de amostra do módulo 1.</p>
+                <p className="mt-1 text-[12px] leading-5 text-graphite/70">
+                  Os 10 módulos completos — testes, ensaios, mentoria e todas as aulas — continuam nos planos pagos.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/planos"
+              className="inline-flex min-h-10 items-center gap-2 border border-gold bg-gold px-5 text-[10px] font-bold text-navy transition-colors hover:bg-gold/90"
+            >
+              Ver planos e continuar <Icon d={icons.arrow} className="h-3 w-3" />
+            </Link>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
+          className="mt-10 grid gap-4 md:grid-cols-2"
+        >
+          {MODULES.map((module, index) => {
+            const acessivel = isModuleAccessible(module, planoAtivo);
+            const moduleDone = moduleDoneCount(module, progress);
+            const modulePct = Math.round((moduleDone / module.totalLessons) * 100);
+            const concluido = moduleDone === module.totalLessons;
+
+            return (
+              <motion.button
+                key={module.slug}
+                type="button"
+                onClick={() => (acessivel ? onOpenModule(module.slug) : (window.location.href = "/planos"))}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 + index * 0.03, ease: EASE }}
+                className={`group flex flex-col rounded-lg border p-6 text-left transition-colors ${
+                  acessivel ? "border-mist bg-white hover:border-gold/70" : "border-mist bg-mist/30"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">Módulo {module.number}</span>
+                  {!acessivel ? (
+                    <span className="flex items-center gap-1.5 rounded-full border border-mist px-2.5 py-1 text-[9px] font-bold uppercase tracking-[.1em] text-graphite/50">
+                      <Icon d={icons.lock} className="h-3 w-3" /> Plano pago
+                    </span>
+                  ) : concluido ? (
+                    <span className="rounded-full bg-gold px-2.5 py-1 text-[9px] font-bold uppercase tracking-[.1em] text-navy">Concluído</span>
+                  ) : moduleDone > 0 ? (
+                    <span className="rounded-full border border-gold/50 bg-gold/[.08] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[.1em] text-navy">Em andamento</span>
+                  ) : null}
+                </div>
+
+                <h2 className={`mt-3 font-serif text-[clamp(1.25rem,2vw,1.6rem)] leading-tight tracking-[-.02em] ${acessivel ? "text-navy" : "text-graphite/55"}`}>
+                  {module.title}
+                </h2>
+                <p className="mt-2 text-[12px] leading-5 text-graphite/55">{module.description}</p>
+
+                <div className="mt-5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-[.1em]">
+                    <span className="text-graphite/45">{moduleDone} de {module.totalLessons} aulas</span>
+                    <span className="text-gold">{acessivel ? `${modulePct}%` : "—"}</span>
+                  </div>
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-mist">
+                    <div className="h-full rounded-full bg-gold" style={{ width: `${acessivel ? modulePct : 0}%` }} />
+                  </div>
+                </div>
+
+                <span
+                  className={`mt-5 inline-flex min-h-10 items-center justify-center gap-2 text-[10px] font-bold transition-colors ${
+                    acessivel
+                      ? "border border-gold bg-gold text-navy group-hover:bg-gold/90"
+                      : "border border-gold bg-gold text-navy"
+                  }`}
+                >
+                  {!acessivel ? (
+                    "Assinar para liberar"
+                  ) : concluido ? (
+                    <>Rever módulo <Icon d={icons.arrow} className="h-3 w-3" /></>
+                  ) : moduleDone > 0 ? (
+                    <>Continuar <Icon d={icons.arrow} className="h-3 w-3" /></>
+                  ) : (
+                    <>Começar <Icon d={icons.arrow} className="h-3 w-3" /></>
+                  )}
+                </span>
+              </motion.button>
+            );
+          })}
         </motion.div>
       </div>
     </div>
@@ -459,35 +628,31 @@ function ExerciseBlock({ exercise, completed, onConclude }: { exercise: Exercise
   );
 }
 
-function ModuleRail({ progress, currentLessonId }: { progress: ProgressMap; currentLessonId: string }) {
-  const done = completedCount(progress);
-  const pct = Math.round((done / MODULE.totalLessons) * 100);
-  const items = [
-    ...MODULE.lessons.map((lesson) => ({ number: lesson.number, title: lesson.title, id: lesson.id, locked: false as const })),
-    ...MODULE.locked.map((locked) => ({ number: locked.number, title: locked.title, id: `locked-${locked.number}`, locked: true as const })),
-  ].sort((a, b) => a.number - b.number);
+function ModuleRail({ module, progress, currentLessonId }: { module: Module; progress: ProgressMap; currentLessonId: string }) {
+  const done = moduleDoneCount(module, progress);
+  const pct = Math.round((done / module.totalLessons) * 100);
 
   return (
     <aside className="sticky top-20 w-[280px] shrink-0 rounded-lg border border-mist bg-white p-5">
       <p className="text-[9px] font-bold uppercase tracking-[.16em] text-gold">Progresso do módulo</p>
-      <p className="mt-1 text-[12px] text-graphite/60">{done} de {MODULE.totalLessons} aulas concluídas</p>
+      <p className="mt-1 text-[12px] text-graphite/60">{done} de {module.totalLessons} aulas concluídas</p>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-mist">
         <motion.div animate={{ width: `${pct}%` }} transition={{ duration: 0.7, ease: EASE }} className="h-full rounded-full bg-gold" />
       </div>
 
       <ol className="mt-5 space-y-1">
-        {items.map((item) => {
-          const isCurrent = item.id === currentLessonId;
-          const isDone = !item.locked && progress[item.id];
+        {module.lessons.map((lesson) => {
+          const isCurrent = lesson.id === currentLessonId;
+          const isDone = !!progress[lesson.id];
           return (
             <li
-              key={item.id}
+              key={lesson.id}
               className={`flex items-center gap-3 rounded-md px-2.5 py-2 ${isCurrent ? "bg-navy text-ivory" : isDone ? "text-graphite/75" : "text-graphite/40"}`}
             >
               <span className={`grid h-5 w-5 shrink-0 place-items-center text-[9px] font-bold ${isCurrent ? "bg-gold text-navy" : isDone ? "text-gold" : ""}`}>
-                {isDone ? <Icon d={icons.check} className="h-3 w-3" /> : isCurrent ? <span className="rounded-full bg-gold" style={{ width: 6, height: 6 }} /> : item.number}
+                {isDone ? <Icon d={icons.check} className="h-3 w-3" /> : isCurrent ? <span className="rounded-full bg-gold" style={{ width: 6, height: 6 }} /> : lesson.number}
               </span>
-              <span className="truncate text-[11px] font-semibold leading-4">{item.title}</span>
+              <span className="truncate text-[11px] font-semibold leading-4">{lesson.title}</span>
             </li>
           );
         })}
@@ -497,14 +662,18 @@ function ModuleRail({ progress, currentLessonId }: { progress: ProgressMap; curr
 }
 
 function LessonView({
+  module,
   lesson,
   progress,
+  planoAtivo,
   onComplete,
   onBack,
   onOpenLesson,
 }: {
+  module: Module;
   lesson: Lesson;
   progress: ProgressMap;
+  planoAtivo: boolean;
   onComplete: (id: string) => void;
   onBack: () => void;
   onOpenLesson: (id: string) => void;
@@ -514,18 +683,20 @@ function LessonView({
   const scaleX = useSpring(scrollYProgress, { stiffness: 140, damping: 32, restDelta: 0.001 });
 
   const completed = !!progress[lesson.id];
-  const nextLesson = MODULE.lessons.find((candidate) => candidate.number > lesson.number && !progress[candidate.id]);
+  const nextLesson = module.lessons.find(
+    (candidate) => candidate.number > lesson.number && isLessonAccessible(module, candidate, planoAtivo) && !progress[candidate.id]
+  );
 
   return (
     <div className="min-h-[100svh] bg-ivory">
-      <TopBar progress={progress} onBack={onBack} />
+      <TopBar done={completedCount(progress)} total={TOTAL_LESSONS} label={`Módulo ${module.number}`} onBack={onBack} />
       <motion.div style={{ scaleX }} className="fixed inset-x-0 top-14 z-30 h-[2px] origin-left bg-gold" />
 
       <div className="mx-auto flex w-[min(100%-32px,1200px)] items-start gap-12 py-10 md:py-14">
         <div ref={contentRef} className="min-w-0 flex-1">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase tracking-[.14em]">
-              <span className="text-gold">Aula {lesson.number} de {MODULE.totalLessons}</span>
+              <span className="text-gold">Aula {lesson.number} de {module.totalLessons}</span>
               <span className="hidden h-px w-8 bg-gold/40 sm:block" />
               <span className="text-graphite/50">{lesson.duration} de leitura</span>
             </div>
@@ -561,7 +732,7 @@ function LessonView({
               <p className="text-[9px] font-bold uppercase tracking-[.16em] text-gold">Progresso do módulo</p>
               <p className="mt-2 font-serif text-[22px] leading-tight">Aula concluída.</p>
               <p className="mt-1 text-[12px] text-ivory/65">
-                {completedCount(progress)} de {MODULE.totalLessons} aulas concluídas · {Math.round((completedCount(progress) / MODULE.totalLessons) * 100)}%
+                {moduleDoneCount(module, progress)} de {module.totalLessons} aulas concluídas · {Math.round((moduleDoneCount(module, progress) / module.totalLessons) * 100)}%
               </p>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <button
@@ -587,52 +758,8 @@ function LessonView({
         </div>
 
         <div className="hidden xl:block">
-          <ModuleRail progress={progress} currentLessonId={lesson.id} />
+          <ModuleRail module={module} progress={progress} currentLessonId={lesson.id} />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function FreeCompleteScreen({ progress, onBack }: { progress: ProgressMap; onBack: () => void }) {
-  return (
-    <div className="min-h-[100svh] bg-ivory">
-      <TopBar progress={progress} onBack={onBack} />
-      <div className="grid min-h-[calc(100svh-56px)] place-items-center px-4 py-14">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          className="w-full max-w-[560px]"
-        >
-          <div className="rounded-lg border border-mist bg-white p-8 text-center md:p-10">
-            <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-navy text-gold">
-              <Icon d={icons.check} className="h-6 w-6" />
-            </span>
-            <p className="mt-6 text-[10px] font-bold uppercase tracking-[.16em] text-gold">Aulas gratuitas concluídas</p>
-            <h1 className="mt-3 font-serif text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.02] tracking-[-.035em] text-navy">
-              Módulos finalizados.
-            </h1>
-            <p className="mx-auto mt-4 max-w-[420px] text-[14px] leading-7 text-graphite/75">
-              Você terminou as duas aulas de amostra do módulo 1. O caminho completo — testes, ensaios, mentoria e as aulas 3 a 8 —
-              continua nos planos pagos.
-            </p>
-
-            <Link
-              href="/planos"
-              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-3 border border-gold bg-gold px-6 text-[11px] font-bold text-navy transition-colors duration-300 hover:bg-gold/90"
-            >
-              Ver planos e continuar <Icon d={icons.arrow} className="h-4 w-4" />
-            </Link>
-            <button
-              type="button"
-              onClick={onBack}
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 border border-mist bg-white px-6 text-[11px] font-bold text-navy transition-colors duration-300 hover:border-gold hover:text-gold"
-            >
-              <Icon d={icons.back} className="h-4 w-4" /> Rever as aulas grátis
-            </button>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
@@ -641,51 +768,86 @@ function FreeCompleteScreen({ progress, onBack }: { progress: ProgressMap; onBac
 export default function LearnPage() {
   const { progress, complete, ready } = useProgress();
   const { loading: carregandoPlano, ativo: planoAtivo } = useActivePlan();
-  const [view, setView] = useState<View>({ name: "module" });
-  const [revisando, setRevisando] = useState(false);
+  const [view, setView] = useState<View>({ name: "index" });
 
-  const activeLesson = view.name === "lesson" ? MODULE.lessons.find((lesson) => lesson.id === view.lessonId) : undefined;
+  const planoDefinido = !carregandoPlano;
 
-  const freeLessonsFeitas = MODULE.lessons.every((lesson) => progress[lesson.id]);
-  const mostrarConclusaoFree = !carregandoPlano && !planoAtivo && ready && freeLessonsFeitas && view.name === "module" && !revisando;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const moduloSlug = params.get("modulo");
+    const aulaId = params.get("aula");
+    if (moduloSlug && aulaId && MODULES.some((m) => m.slug === moduloSlug && m.lessons.some((l) => l.id === aulaId))) {
+      setView({ name: "lesson", slug: moduloSlug, lessonId: aulaId });
+    } else if (moduloSlug && MODULES.some((m) => m.slug === moduloSlug)) {
+      setView({ name: "module", slug: moduloSlug });
+    }
+  }, []);
+
+  useEffect(() => {
+    let url = "/dashboard/aprender";
+    if (view.name === "module") url = `/dashboard/aprender?modulo=${view.slug}`;
+    if (view.name === "lesson") url = `/dashboard/aprender?modulo=${view.slug}&aula=${view.lessonId}`;
+    window.history.replaceState(null, "", url);
+  }, [view]);
+
+  const moduleAtivo = view.name !== "index" ? MODULES.find((m) => m.slug === view.slug) : undefined;
+
+  const acessiveis = MODULES.filter((m) => isModuleAccessible(m, !!planoAtivo)).flatMap((m) => m.lessons);
+  const freeLessonsFeitas = acessiveis.length > 0 && acessiveis.every((lesson) => progress[lesson.id]);
+  const conclusaoFree = planoDefinido && !planoAtivo && ready && freeLessonsFeitas;
+
+  const irParaIndex = () => {
+    setView({ name: "index" });
+    window.scrollTo({ top: 0 });
+  };
+
+  if (view.name === "lesson" && moduleAtivo) {
+    const lesson = moduleAtivo.lessons.find((l) => l.id === view.lessonId);
+    if (lesson && isLessonAccessible(moduleAtivo, lesson, !!planoAtivo)) {
+      return (
+        <LessonView
+          module={moduleAtivo}
+          lesson={lesson}
+          progress={progress}
+          planoAtivo={!!planoAtivo}
+          onComplete={complete}
+          onBack={() => {
+            setView({ name: "module", slug: moduleAtivo.slug });
+            window.scrollTo({ top: 0 });
+          }}
+          onOpenLesson={(id) => {
+            setView({ name: "lesson", slug: moduleAtivo.slug, lessonId: id });
+            window.scrollTo({ top: 0 });
+          }}
+        />
+      );
+    }
+  }
+
+  if (view.name === "module" && moduleAtivo) {
+    return (
+      <ModuleOverview
+        module={moduleAtivo}
+        progress={progress}
+        planoAtivo={!!planoAtivo}
+        onBack={irParaIndex}
+        onOpenLesson={(id) => {
+          setView({ name: "lesson", slug: moduleAtivo.slug, lessonId: id });
+          window.scrollTo({ top: 0 });
+        }}
+      />
+    );
+  }
 
   return (
-    <>
-      {mostrarConclusaoFree ? (
-        <FreeCompleteScreen
-          progress={progress}
-          onBack={() => {
-            setRevisando(true);
-            setView({ name: "module" });
-            window.scrollTo({ top: 0 });
-          }}
-        />
-      ) : view.name === "lesson" && activeLesson ? (
-        <LessonView
-          lesson={activeLesson}
-          progress={progress}
-          onComplete={complete}
-          onBack={() => setView({ name: "module" })}
-          onOpenLesson={(id) => {
-            setRevisando(false);
-            setView({ name: "lesson", lessonId: id });
-            window.scrollTo({ top: 0 });
-          }}
-        />
-      ) : (
-        <ModuleOverview
-          progress={progress}
-          planoAtivo={!carregandoPlano && planoAtivo}
-          onBack={() => {
-            window.location.href = "/dashboard";
-          }}
-          onOpenLesson={(id) => {
-            setRevisando(false);
-            setView({ name: "lesson", lessonId: id });
-            window.scrollTo({ top: 0 });
-          }}
-        />
-      )}
-    </>
+    <IndexView
+      progress={progress}
+      planoAtivo={!!planoAtivo}
+      conclusaoFree={conclusaoFree}
+      onOpenModule={(slug) => {
+        setView({ name: "module", slug });
+        window.scrollTo({ top: 0 });
+      }}
+    />
   );
 }
