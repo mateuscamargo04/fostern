@@ -1,0 +1,232 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import { ReactNode, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useUser, type UsuarioLogado } from "@/lib/use-user";
+
+type NavItem = { href: string; label: string; d: string };
+
+const mainNav: NavItem[] = [
+  { href: "/dashboard", label: "Visão geral", d: "M3 10.5 12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" },
+  { href: "/dashboard/aprender", label: "Minha jornada", d: "M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6.6 5.5 5.5 0 0 1 21.5 12C19 16.5 12 21 12 21z" },
+  { href: "/dashboard/metas", label: "Metas & universidades", d: "M12 2.5 3 6.5v5c0 5 3.8 8.7 9 10 5.2-1.3 9-5 9-10v-5l-9-4zM8.5 12l2.5 2.5 4.5-5" },
+  { href: "/dashboard/documentos", label: "Documentos", d: "M14 2.5H7a1.5 1.5 0 0 0-1.5 1.5v16A1.5 1.5 0 0 0 7 21.5h10a1.5 1.5 0 0 0 1.5-1.5V8zM14 2.5V8h5.5M9 13h6M9 17h6" },
+  { href: "/dashboard/mentoria", label: "Mentoria", d: "M2.5 20.5c.8-3 3-4.5 5-4.5s4.2 1.5 5 4.5M7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM16 6.5a3.5 3.5 0 1 0-1.2 2.7M14.5 16.6c1.8-.4 3.8 0 5 1.9M19 4.5l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" },
+  { href: "/dashboard/financas", label: "Finanças", d: "M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5zM3.5 10h17M16.5 14.5h2" },
+  { href: "/dashboard/comunidade", label: "Comunidade", d: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z" },
+];
+
+const accountNav: NavItem[] = [
+  { href: "/dashboard/perfil", label: "Perfil", d: "M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM3.5 20.5c1-4 4.5-5.5 8.5-5.5s7.5 1.5 8.5 5.5" },
+  { href: "/dashboard/configuracoes", label: "Configurações", d: "M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM19.4 13.5l1.6 1.2-1.9 3.3-1.9-.8a8.6 8.6 0 0 1-1.7 1l-.3 2H9.8l-.3-2a8.6 8.6 0 0 1-1.7-1l-1.9.8L4 14.7l1.6-1.2a7.9 7.9 0 0 1 0-2L4 10.3 5.9 7l1.9.8a8.6 8.6 0 0 1 1.7-1l.3-2h5.4l.3 2a8.6 8.6 0 0 1 1.7 1l1.9-.8L20 10.3l-1.6 1.2a7.9 7.9 0 0 1 0 2z" },
+];
+
+function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
+function Avatar({ user, size = "h-9 w-9 text-[13px]" }: { user: UsuarioLogado | null; size?: string }) {
+  if (user?.avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={user.avatarUrl} alt={user.name} className={`shrink-0 rounded-full object-cover ${size}`} />
+    );
+  }
+  return (
+    <span className={`grid shrink-0 place-items-center rounded-full bg-gold font-serif font-semibold text-navy ${size}`}>
+      {user?.initials ?? "ES"}
+    </span>
+  );
+}
+
+function NavLink({ item, active, onNavigate }: { item: NavItem; active: boolean; onNavigate?: () => void }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 rounded-md px-3.5 py-2.5 text-[12px] font-semibold transition-colors duration-200 ${
+        active ? "bg-white/[.07] text-gold" : "text-ivory/60 hover:bg-white/[.04] hover:text-ivory"
+      }`}
+    >
+      <Icon d={item.d} className="h-[17px] w-[17px]" />
+      {item.label}
+    </Link>
+  );
+}
+
+function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const isActive = (item: NavItem) =>
+    item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
+  return (
+    <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4">
+      <nav className="space-y-1">
+        {mainNav.map((item) => (
+          <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
+        ))}
+      </nav>
+      <nav className="border-t border-white/10 pt-6">
+        <p className="px-3.5 pb-2 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Conta</p>
+        <div className="space-y-1">
+          {accountNav.map((item) => (
+            <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
+function MentorCard() {
+  return (
+    <div className="m-4 rounded-lg border border-white/10 bg-white/[.04] p-4">
+      <p className="text-[9px] font-bold uppercase tracking-[.14em] text-gold">Próxima mentoria</p>
+      <p className="mt-2 text-[12px] font-semibold text-ivory/80">Nenhuma agendada</p>
+      <p className="mt-0.5 text-[10px] leading-4 text-ivory/45">As sessões aparecem aqui quando forem marcadas.</p>
+    </div>
+  );
+}
+
+function ProfileBlock({ user, onSignOut }: { user: UsuarioLogado | null; onSignOut: () => void }) {
+  return (
+    <div className="border-t border-white/10 px-4 py-5">
+      <Link href="/dashboard/perfil" className="flex items-center gap-3 rounded-md px-3 py-1.5 transition-colors hover:bg-white/[.04]">
+        <Avatar user={user} />
+        <div className="min-w-0">
+          <p className="truncate text-[12px] font-semibold text-ivory">{user?.name ?? "Estudante"}</p>
+          <p className="truncate text-[10px] text-ivory/45">{user?.email ?? "Área do estudante"}</p>
+        </div>
+      </Link>
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="mt-3 w-full rounded-md border border-white/15 py-2 text-[10px] font-bold uppercase tracking-[.14em] text-ivory/60 transition-colors hover:border-gold hover:text-gold"
+      >
+        Sair
+      </button>
+    </div>
+  );
+}
+
+export function DashboardShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const { user } = useUser();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isLearn = pathname.startsWith("/dashboard/aprender");
+  if (isLearn) return <>{children}</>;
+
+  const signOut = async () => {
+    await createClient().auth.signOut();
+    window.location.href = "/";
+  };
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  const section = [...mainNav, ...accountNav].find(
+    (item) => item.href === pathname || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+  );
+
+  return (
+    <div className="flex min-h-[100svh] bg-mist/40 text-graphite">
+      <aside className="sticky top-0 hidden h-[100svh] w-[248px] shrink-0 flex-col bg-navy text-ivory lg:flex">
+        <div className="px-7 pb-6 pt-7">
+          <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
+          <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
+        </div>
+        <SidebarNav pathname={pathname} />
+        <MentorCard />
+        <ProfileBlock user={user} onSignOut={signOut} />
+      </aside>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-40 bg-navy/60 backdrop-blur-sm lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-navy text-ivory shadow-2xl lg:hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Fechar menu"
+                className="absolute right-3 top-5 grid h-10 w-10 place-items-center border border-white/20 text-ivory transition-colors hover:border-gold hover:text-gold"
+              >
+                <span className="text-lg leading-none">✕</span>
+              </button>
+              <div className="px-7 pb-6 pt-7">
+                <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
+                <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
+              </div>
+              <SidebarNav pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+              <ProfileBlock user={user} onSignOut={signOut} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/10 bg-navy px-4 py-3.5 text-ivory md:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menu"
+            aria-expanded={mobileOpen}
+            className="grid h-11 w-11 shrink-0 place-items-center border border-white/25 transition-colors hover:border-gold hover:text-gold lg:hidden"
+          >
+            <span className="grid gap-1.5">
+              <span className="h-px w-5 bg-current" />
+              <span className="h-px w-5 bg-current" />
+              <span className="h-px w-5 bg-current" />
+            </span>
+          </button>
+          <div className="lg:hidden">
+            <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-28" />
+          </div>
+          <div className="hidden items-center gap-2 text-[12px] text-ivory/50 lg:flex">
+            <span className="font-semibold text-gold">{section?.label ?? "Dashboard"}</span>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-[12px] text-ivory/60 md:flex">
+              <Icon d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3" className="h-3.5 w-3.5" />
+              Buscar material, tarefa…
+            </div>
+            <button className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-ivory/80 transition-colors hover:border-gold hover:text-gold">
+              <Icon d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-gold" />
+            </button>
+            <Link href="/dashboard/perfil" aria-label="Perfil">
+              <Avatar user={user} size="h-10 w-10 text-[13px]" />
+            </Link>
+          </div>
+        </header>
+
+        <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 py-8 md:px-10 md:py-10">{children}</main>
+      </div>
+    </div>
+  );
+}

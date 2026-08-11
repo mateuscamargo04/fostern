@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isLearn = request.nextUrl.pathname.startsWith("/dashboard/aprender");
+  const isConta = request.nextUrl.pathname.startsWith("/dashboard/perfil") || request.nextUrl.pathname.startsWith("/dashboard/configuracoes");
   const isPlanos = request.nextUrl.pathname.startsWith("/planos");
   const isRoot = request.nextUrl.pathname === "/";
 
@@ -53,8 +54,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // A área do estudante só é liberada para quem tem plano ativo.
-  // Aulas de amostra (/dashboard/aprender) ficam abertas para o plano gratuito.
-  if (user && isDashboard && !isLearn) {
+  // Aulas de amostra (/dashboard/aprender) ficam abertas para o plano gratuito,
+  // assim como a gestão da conta (perfil e configurações).
+  if (user && isDashboard && !isLearn && !isConta) {
     const agora = new Date().toISOString();
     const { data } = await supabase
       .from("assinaturas")
