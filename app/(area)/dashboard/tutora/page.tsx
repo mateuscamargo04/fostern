@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Fragment, ReactNode, useRef, useState } from "react";
+import { FormEvent, Fragment, ReactNode, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/use-user";
@@ -73,6 +73,16 @@ export default function TutoraPage() {
   const [texto, setTexto] = useState("");
   const [esperando, setEsperando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [limite, setLimite] = useState<{ limite: number; restante: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/tutora")
+      .then((resposta) => resposta.json().catch(() => null))
+      .then((dados) => {
+        if (dados?.limite !== undefined) setLimite(dados);
+      })
+      .catch(() => {});
+  }, []);
 
   const enviar = async (perguntaRaw?: string) => {
     const pergunta = (perguntaRaw ?? texto).trim();
@@ -93,6 +103,7 @@ export default function TutoraPage() {
         throw new Error(dados?.error ?? "Não foi possível responder.");
       }
       setMensagens([...novas, { papel: "ia", texto: dados.resposta }]);
+      setLimite((atual) => (atual ? { ...atual, restante: Math.max(0, atual.restante - 1) } : atual));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível responder.");
     } finally {
@@ -111,6 +122,12 @@ export default function TutoraPage() {
         <p className="mt-2 max-w-[520px] text-[12px] leading-5 text-graphite/55">
           Tire dúvidas sobre universidades, ensaios, prazos e testes de proficiência com a sua mentora pessoal.
         </p>
+        {limite && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-mist bg-white px-3 py-1.5 text-[11px] font-medium text-graphite/60">
+            <span className={`h-1.5 w-1.5 rounded-full ${limite.restante === 0 ? "bg-[#C96A52]" : "bg-gold"}`} />
+            {limite.restante} de {limite.limite} mensagens restantes hoje
+          </p>
+        )}
       </motion.div>
 
       {erro && (

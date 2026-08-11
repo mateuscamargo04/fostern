@@ -63,6 +63,7 @@ const plans = [
     description: "Pra começar: as primeiras aulas do módulo 1.",
     features: ["Aulas 1 e 2 do módulo 1", "Exercícios com correção", "Entenda o que as admissões procuram"],
     cta: "Começar grátis",
+    ctaHref: "/auth?mode=register",
     highlight: false
   },
   {
@@ -70,8 +71,9 @@ const plans = [
     price: "R$29,90",
     period: "/mês",
     description: "Acesso completo, mês a mês.",
-    features: ["Tudo do plano Gratuito", "Módulo 1 completo (8 aulas)", "Estratégia para SAT e TOEFL", "Mentoria individual"],
+    features: ["Acesso a todos os módulos", "Tutor de IA", "Acesso à comunidade", "Estratégia para SAT e TOEFL", "Mentoria individual"],
     cta: "Assinar mensal",
+    ctaHref: "/planos",
     highlight: true
   },
   {
@@ -79,8 +81,9 @@ const plans = [
     price: "R$199,90",
     period: "/ano",
     description: "O mesmo acesso completo, com renovação automática.",
-    features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria"],
+    features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria", "Revisão de redações e projetos"],
     cta: "Assinar anual",
+    ctaHref: "/planos",
     highlight: false
   }
 ];
@@ -334,18 +337,37 @@ function UniversityAtlas() {
   );
 }
 
+const WHATSAPP_NUMERO = "55169993099045";
+
 function ConversationForm() {
   const [submitted, setSubmitted] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
+    const dados = new FormData(form);
+    const nome = String(dados.get("name") ?? "").trim();
+    const email = String(dados.get("email") ?? "").trim();
+    const stage = String(dados.get("stage") ?? "").trim();
+    const mensagem = [
+      "Olá! Vim pelo site da Fostern e quero começar uma conversa.",
+      "",
+      `Nome: ${nome}`,
+      `E-mail: ${email}`,
+      `Momento: ${stage}`,
+    ].join("\n");
+    setEnviando(true);
+    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`, "_blank");
     setSubmitted(true);
+    setEnviando(false);
+    form.reset();
   };
   return (
     <form onSubmit={onSubmit} className="mt-12 grid gap-4 text-left sm:grid-cols-2">
       <label className="block"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">SEU NOME</span><input required name="name" autoComplete="name" className="h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold" /></label>
       <label className="block"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">E-MAIL</span><input required name="email" type="email" autoComplete="email" className="h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold" /></label>
       <label className="block sm:col-span-2"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">EM QUE MOMENTO VOCÊ ESTÁ?</span><select required name="stage" defaultValue="" className="field-select h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold"><option value="" disabled className="text-graphite">Selecione uma opção</option><option className="text-graphite">Ensino Fundamental II</option><option className="text-graphite">Ensino Médio</option><option className="text-graphite">Em processo de aplicação</option><option className="text-graphite">Sou mãe, pai ou responsável</option></select></label>
-      <div className="sm:col-span-2"><button type="submit" className="group inline-flex min-h-12 items-center gap-7 border border-gold bg-gold px-5 text-[11px] font-bold text-navy transition hover:-translate-y-0.5 hover:bg-gold/90">Iniciar uma conversa <Arrow /></button>{submitted && <p role="status" className="mt-4 text-xs text-ivory/80">Obrigado. Vamos entrar em contato para entender seu momento.</p>}</div>
+      <div className="sm:col-span-2"><button type="submit" disabled={enviando} className="group inline-flex min-h-12 items-center gap-7 border border-gold bg-gold px-5 text-[11px] font-bold text-navy transition hover:-translate-y-0.5 hover:bg-gold/90 disabled:cursor-wait disabled:opacity-60">Iniciar uma conversa <Arrow /></button>{submitted && <p role="status" className="mt-4 text-xs text-ivory/80">Abrimos seu WhatsApp com a mensagem pronta — é só enviar. Ou escreva direto para <a href="mailto:mateusdevlp@gmail.com" className="font-semibold text-gold underline decoration-gold/40 underline-offset-2">mateusdevlp@gmail.com</a>.</p>}<p className="mt-3 text-[10px] leading-5 text-ivory/55">Resposta direta pelo WhatsApp <span className="text-ivory/80">+55 16 99309-9045</span>.</p></div>
     </form>
   );
 }
@@ -403,7 +425,7 @@ export function FosternLanding() {
                     ))}
                   </ul>
                   <div className="mt-8">
-                    <PrimaryLink href="#conversa" light={plan.highlight}>{plan.cta}</PrimaryLink>
+                    <PrimaryLink href={plan.ctaHref} light={plan.highlight}>{plan.cta}</PrimaryLink>
                   </div>
                 </Reveal>
               ))}
@@ -413,7 +435,7 @@ export function FosternLanding() {
 
         <section id="conversa" className="grain relative overflow-hidden bg-deep-navy py-28 text-ivory md:py-36"><div className="pointer-events-none absolute right-[8%] top-0 h-[380px] w-[380px] rounded-full border border-ivory/20" /><div className="pointer-events-none absolute right-[13%] top-[44px] h-[290px] w-[290px] rounded-full border border-ivory/15" /><Reveal className="relative mx-auto max-w-[770px] px-5 text-center md:px-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-gold">O próximo passo</p><h2 className="mt-5 font-serif text-[clamp(3rem,5.4vw,5.5rem)] leading-[.92] tracking-[-.05em]">Comece com uma conversa honesta sobre o que é possível <em className="not-italic text-gold">construir.</em></h2><p className="mx-auto mt-6 max-w-lg text-[13px] leading-7 text-ivory/80">Não é preciso ter tudo resolvido para começar. É preciso estar disposto a olhar com seriedade para o próximo passo.</p><ConversationForm /><p className="mx-auto mt-6 max-w-md text-[9px] leading-5 text-ivory/60">Para estudantes e famílias em busca de orientação internacional com profundidade.</p></Reveal></section>
       </main>
-      <footer className="bg-navy text-ivory"><div className="mx-auto grid min-h-[170px] w-[min(100%-40px,1280px)] items-center gap-7 border-b border-ivory/15 py-9 md:w-[min(100%-80px,1320px)] md:grid-cols-3 md:py-0"><Brand compact /><p className="text-[11px] text-ivory/70">Preparação internacional com profundidade.</p><div className="flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-semibold text-ivory/75 md:justify-end"><Link href="#metodo">Método</Link><Link href="#mentoria">Mentoria</Link><Link href="#familias">Para famílias</Link><Link href="#conversa">Contato</Link></div></div><div className="mx-auto flex min-h-[64px] w-[min(100%-40px,1280px)] flex-wrap items-center gap-5 text-[9px] text-ivory/50 md:w-[min(100%-80px,1320px)]"><span>© 2026 Fostern</span><span className="ml-auto">Brasil · Mundo</span><Link href="#inicio">Privacidade</Link></div></footer>
+      <footer className="bg-navy text-ivory"><div className="mx-auto grid min-h-[170px] w-[min(100%-40px,1280px)] items-center gap-7 border-b border-ivory/15 py-9 md:w-[min(100%-80px,1320px)] md:grid-cols-3 md:py-0"><Brand compact /><p className="text-[11px] text-ivory/70">Preparação internacional com profundidade.</p><div className="flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-semibold text-ivory/75 md:justify-end"><Link href="#metodo">Método</Link><Link href="#mentoria">Mentoria</Link><Link href="#familias">Para famílias</Link><Link href="#conversa">Contato</Link><a href={`https://wa.me/${WHATSAPP_NUMERO}`} target="_blank" rel="noopener noreferrer" className="text-gold transition-opacity hover:opacity-70">WhatsApp</a></div></div><div className="mx-auto flex min-h-[64px] w-[min(100%-40px,1280px)] flex-wrap items-center gap-5 text-[9px] text-ivory/50 md:w-[min(100%-80px,1320px)]"><span>© 2026 Fostern</span><span className="ml-auto">Brasil · Mundo</span><Link href="#inicio">Privacidade</Link></div></footer>
     </div>
   );
 }

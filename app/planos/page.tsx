@@ -28,9 +28,10 @@ const featuresBySlug: Record<string, string[]> = {
     "Exercício com correção e explicação",
   ],
   mensal: [
-    "Tudo do plano gratuito",
-    "Módulo 1 completo (8 aulas)",
-    "Testes padronizados: estratégia para SAT e TOEFL",
+    "Acesso a todos os módulos",
+    "Tutor de IA — assistente de estudos com o método Fostern",
+    "Acesso à comunidade",
+    "Estratégia para SAT e TOEFL",
     "Ensaios pessoais e recomendações",
     "Mentoria individual",
   ],
@@ -41,6 +42,13 @@ const featuresBySlug: Record<string, string[]> = {
     "Revisão de redações e projetos",
   ],
 };
+
+const incluido = [
+  { termo: "Todos os módulos", descricao: "Módulos 1 a 8 com aulas, exercícios e correção.", icone: "M12 6.2c-1.7-1.1-4-1.6-6.4-1.6v13.2c2.4 0 4.7.5 6.4 1.6M12 6.2c1.7-1.1 4-1.6 6.4-1.6v13.2c-2.4 0-4.7.5-6.4 1.6M12 6.2v13.2" },
+  { termo: "Tutor de IA", descricao: "Tire dúvidas, revise ensaios e organize o estudo a qualquer hora.", icone: "M4 4h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-4.5 4.5V8a4 4 0 0 1 4-4H4zM8.5 9h7M8.5 13h4" },
+  { termo: "Comunidade", descricao: "Converse com outros estudantes na mesma jornada.", icone: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z" },
+  { termo: "Mentoria individual", descricao: "Sessões com mentoria focada na sua candidatura.", icone: "M2.5 20.5c.8-3 3-4.5 5-4.5s4.2 1.5 5 4.5M7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" },
+];
 
 export default function PlanosPage() {
   const router = useRouter();
@@ -216,6 +224,27 @@ export default function PlanosPage() {
             })}
           </div>
         )}
+
+        <div className="mt-16">
+          <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold">O que está incluído</p>
+          <h2 className="mt-3 max-w-xl font-serif text-[clamp(1.6rem,3.4vw,2.3rem)] leading-tight tracking-[-.03em] text-navy">
+            Uma preparação completa, do planejamento à candidatura.
+          </h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {incluido.map((item) => (
+              <div key={item.termo} className="border border-mist bg-white p-5">
+                <span className="grid h-11 w-11 place-items-center rounded-md border border-mist bg-ivory text-gold">
+                  <Icon d={item.icone} className="h-5 w-5" />
+                </span>
+                <p className="mt-4 font-serif text-[17px] tracking-[-.02em] text-navy">{item.termo}</p>
+                <p className="mt-1.5 text-[11px] leading-5 text-graphite/60">{item.descricao}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 text-[10px] leading-5 text-graphite/50">
+            A Tutora IA é exclusiva de planos pagos e tem limite diário de mensagens para uso responsável.
+          </p>
+        </div>
 
         <div className="mt-10 flex items-start gap-3 rounded-md bg-mist/60 p-5 text-[12px] leading-5 text-graphite/70">
           <Icon d={lock} className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
