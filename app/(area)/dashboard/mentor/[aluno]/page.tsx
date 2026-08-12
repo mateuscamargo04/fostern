@@ -67,12 +67,35 @@ type App = {
   pronta: boolean;
   revisao_mentor: string | null;
   revisada_em: string | null;
+  avaliacao_ia: AvaliacaoIA | null;
+  avaliada_ia_em: string | null;
   atualizado_em: string | null;
 };
 
 type Doc = { id: string; nome: string; tipo: string | null; tamanho_bytes: number | null; criado_em: string; url?: string | null };
 type Uni = { id: string; nome: string; pais: string | null; curso: string | null; prazo_candidatura: string | null; taxa_candidatura: string | null; status: string; nota: number | null };
 type Mentoria = { id: string; mentor_nome: string | null; agendada_para: string | null; duracao_min: number; status: string; notas: string | null };
+
+type SecaoAvaliacao = { nota: number; comentario: string };
+type AvaliacaoIA = {
+  nota_geral: number;
+  secoes: Record<string, SecaoAvaliacao>;
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  sugestoes: string[];
+  veredito: string;
+};
+
+const SECAO_LABEL: Record<string, string> = {
+  academico: "Perfil acadêmico",
+  testes: "Testes padronizados",
+  extracurriculares: "Atividades",
+  idiomas: "Idiomas",
+  voluntariado: "Voluntariado",
+  financas: "Finanças",
+  ensaios: "Ensaios",
+  preferencias: "Preferências",
+};
 
 function Icon({ d, className = "h-[18px] w-[18px]" }: { d: string; className?: string }) {
   return (
@@ -111,6 +134,23 @@ function Card({ titulo, children, delay = 0 }: { titulo: string; children: React
       <h2 className="font-serif text-[1.3rem] tracking-[-.02em] text-navy">{titulo}</h2>
       <div className="mt-5">{children}</div>
     </motion.section>
+  );
+}
+
+function BarraNota({ rotulo, nota }: { rotulo: string; nota: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold text-navy">{rotulo}</p>
+        <p className="text-[11px] font-bold text-graphite/60">{nota}</p>
+      </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-mist">
+        <div
+          className={`h-full rounded-full ${nota >= 80 ? "bg-gold" : nota >= 60 ? "bg-[#E5B84B]" : "bg-[#D98A6B]"}`}
+          style={{ width: `${nota}%` }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -277,6 +317,49 @@ export default function MentorAlunoPage() {
           </button>
         </div>
       </form>
+
+      <Card titulo="Avaliação da IA" delay={0.03}>
+        {app?.avaliacao_ia ? (
+          <>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-gold bg-ivory">
+                <span className="font-serif text-[1.4rem] font-bold text-navy">{app.avaliacao_ia.nota_geral}</span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-navy">Nota geral (0–100)</p>
+                <p className="text-[10px] text-graphite/50">{app.avaliada_ia_em ? `Gerada em ${fmtData(app.avaliada_ia_em)}` : ""}</p>
+              </div>
+            </div>
+            {app.avaliacao_ia.veredito && (
+              <p className="mt-4 rounded-md border border-mist bg-ivory/60 px-4 py-3 text-[12px] leading-5 text-graphite/80">
+                “{app.avaliacao_ia.veredito}”
+              </p>
+            )}
+            {Object.keys(app.avaliacao_ia.secoes).length > 0 && (
+              <div className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                {Object.entries(app.avaliacao_ia.secoes).map(([chave, secao]) => (
+                  <BarraNota key={chave} rotulo={SECAO_LABEL[chave] ?? chave} nota={secao.nota} />
+                ))}
+              </div>
+            )}
+            {app.avaliacao_ia.sugestoes.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[10px] font-bold uppercase tracking-[.16em] text-graphite/45">Sugestões da IA</p>
+                <ul className="mt-3 space-y-2">
+                  {app.avaliacao_ia.sugestoes.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[12px] leading-5 text-graphite/70">
+                      <Icon d={icons.doc} className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        ) : (
+          <Empty text="O estudante ainda não gerou uma avaliação por IA." />
+        )}
+      </Card>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card titulo="Perfil acadêmico" delay={0.05}>

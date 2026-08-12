@@ -96,6 +96,44 @@ const aplicacaoVazia: Aplicacao = {
   pronta: false,
 };
 
+type SecaoAvaliacao = { nota: number; comentario: string };
+type AvaliacaoIA = {
+  nota_geral: number;
+  secoes: Record<string, SecaoAvaliacao>;
+  pontos_fortes: string[];
+  pontos_fracos: string[];
+  sugestoes: string[];
+  veredito: string;
+};
+
+const SECAO_LABEL: Record<string, string> = {
+  academico: "Perfil acadêmico",
+  testes: "Testes padronizados",
+  extracurriculares: "Atividades",
+  idiomas: "Idiomas",
+  voluntariado: "Voluntariado",
+  financas: "Finanças",
+  ensaios: "Ensaios",
+  preferencias: "Preferências",
+};
+
+function BarraNota({ rotulo, nota }: { rotulo: string; nota: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold text-navy">{rotulo}</p>
+        <p className="text-[11px] font-bold text-graphite/60">{nota}</p>
+      </div>
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-mist">
+        <div
+          className={`h-full rounded-full ${nota >= 80 ? "bg-gold" : nota >= 60 ? "bg-[#E5B84B]" : "bg-[#D98A6B]"}`}
+          style={{ width: `${nota}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 const STATUS_INFO: Record<string, { label: string; pill: string }> = {
   rascunho: { label: "Rascunho", pill: "border-mist bg-ivory text-graphite/60" },
   pronta: { label: "Pronta para revisão", pill: "border-gold/60 bg-gold/[.08] text-navy" },
@@ -167,6 +205,9 @@ export default function AplicacaoPage() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const [avaliacao, setAvaliacao] = useState<AvaliacaoIA | null>(null);
+  const [avaliadaEm, setAvaliadaEm] = useState<string | null>(null);
+  const [avaliando, setAvaliando] = useState(false);
 
   const getClient = useCallback(() => {
     if (!supabaseRef.current) supabaseRef.current = createClient();
@@ -199,6 +240,8 @@ export default function AplicacaoPage() {
       } as Aplicacao);
     }
     if (docs) setDocumentos(docs as Documento[]);
+    setAvaliacao((app?.avaliacao_ia as AvaliacaoIA | null) ?? null);
+    setAvaliadaEm(app?.avaliada_ia_em ?? null);
     setCarregando(false);
   }, [getClient]);
 
@@ -340,6 +383,24 @@ export default function AplicacaoPage() {
     }
   };
 
+  const avaliar = async () => {
+    setErro(null);
+    setOk(null);
+    setAvaliando(true);
+    try {
+      const res = await fetch("/api/aplicacao/avaliar", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Não foi possível avaliar a simulação.");
+      setAvaliacao(data.avaliacao as AvaliacaoIA);
+      setAvaliadaEm(data.avaliada_ia_em ?? null);
+      setOk("Avaliação concluída — veja o resultado abaixo.");
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível avaliar a simulação.");
+    } finally {
+      setAvaliando(false);
+    }
+  };
+
   if (carregando) {
     return (
       <div>
@@ -363,6 +424,15 @@ export default function AplicacaoPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={avaliar}
+              disabled={avaliando}
+              className="inline-flex min-h-11 items-center justify-center gap-3 border border-gold bg-transparent px-5 text-[11px] font-bold text-gold transition-colors hover:bg-gold/[.08] disabled:cursor-wait disabled:opacity-60"
+            >
+              <Icon d={icons.spark} className="h-4 w-4" />
+              {avaliando ? "Avaliando…" : "Avaliar com IA"}
+            </button>
             <button
               type="button"
               onClick={() => salvar(false)}
@@ -415,6 +485,111 @@ export default function AplicacaoPage() {
           </p>
         </div>
       </motion.section>
+
+      {(avaliacao || avaliando) && (
+        <motion.section
+          {...fade}
+          transition={{ duration: 0.7, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
+          className={cardClass + " mt-6"}
+        >
+          {avaliando ? (
+            <div className="flex items-center gap-4 py-3">
+              <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+              <div>
+                <p className="text-[13px] font-semibold text-navy">Avaliando sua simulação…</p>
+                <p className="mt-0.5 text-[12px] leading-5 text-graphite/55">Lendo o dossiê e os documentos. Leva alguns segundos.</p>
+              </div>
+            </div>
+          ) : (
+            avaliacao && (
+              <>
+                <div className="flex flex-wrap items-start justify-between gap-6">
+                  <div>
+                    <h2 className="font-serif text-[1.3rem] tracking-[-.02em] text-navy">Avaliação da simulação</h2>
+                    <p className="mt-1.5 max-w-[520px] text-[12px] leading-5 text-graphite/55">
+                      {avaliadaEm ? `Gerada em ${new Date(avaliadaEm).toLocaleString("pt-BR")}. ` : ""}
+                      Uma referência de como a sua candidatura está hoje, como um avaliador de admissões veria.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`grid h-16 w-16 place-items-center rounded-full border-2 bg-ivory ${
+                        avaliacao.nota_geral >= 80 ? "border-gold" : avaliacao.nota_geral >= 60 ? "border-[#E5B84B]" : "border-[#D98A6B]"
+                      }`}
+                    >
+                      <span className="font-serif text-[1.5rem] font-bold text-navy">{avaliacao.nota_geral}</span>
+                    </div>
+                    <p className="max-w-[150px] text-[11px] leading-4 text-graphite/55">Nota geral<br />(0–100)</p>
+                  </div>
+                </div>
+
+                {avaliacao.veredito && (
+                  <p className="mt-5 rounded-md border border-mist bg-ivory/60 px-4 py-3 text-[12px] leading-5 text-graphite/80">
+                    “{avaliacao.veredito}”
+                  </p>
+                )}
+
+                {Object.keys(avaliacao.secoes).length > 0 && (
+                  <div className="mt-6 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                    {Object.entries(avaliacao.secoes).map(([chave, secao]) => (
+                      <BarraNota key={chave} rotulo={SECAO_LABEL[chave] ?? chave} nota={secao.nota} />
+                    ))}
+                  </div>
+                )}
+
+                {avaliacao.secoes && Object.keys(avaliacao.secoes).length > 0 && (
+                  <div className="mt-6 space-y-3 border-t border-mist/70 pt-5">
+                    {Object.entries(avaliacao.secoes).map(([chave, secao]) =>
+                      secao.comentario ? (
+                        <p key={chave} className="text-[12px] leading-5 text-graphite/60">
+                          <span className="font-bold text-navy">{SECAO_LABEL[chave] ?? chave}: </span>
+                          {secao.comentario}
+                        </p>
+                      ) : null,
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-7 grid gap-6 md:grid-cols-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[.16em] text-graphite/45">Pontos fortes</p>
+                    <ul className="mt-3 space-y-2">
+                      {avaliacao.pontos_fortes.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-[12px] leading-5 text-graphite/70">
+                          <Icon d={icons.check} className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[.16em] text-graphite/45">Pontos fracos</p>
+                    <ul className="mt-3 space-y-2">
+                      {avaliacao.pontos_fracos.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-[12px] leading-5 text-graphite/70">
+                          <Icon d={icons.flag} className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D98A6B]" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[.16em] text-graphite/45">Como melhorar</p>
+                    <ul className="mt-3 space-y-2">
+                      {avaliacao.sugestoes.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-[12px] leading-5 text-graphite/70">
+                          <Icon d={icons.plus} className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )
+          )}
+        </motion.section>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <SectionCard titulo="Perfil acadêmico" desc="Onde você estuda hoje e como é o seu desempenho." delay={0.08}>
