@@ -207,7 +207,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
   const isRegister = mode === "register";
 
   return (
-    <main className="grain relative min-h-[100svh] bg-navy text-ivory lg:h-[100svh] lg:overflow-hidden lg:grid lg:grid-cols-2">
+    <main className="safe-bottom grain relative min-h-[100svh] bg-navy text-ivory lg:h-[100svh] lg:overflow-hidden lg:grid lg:grid-cols-2">
       <div className="flex flex-col px-6 py-6 md:px-12 lg:px-14 lg:overflow-y-auto lg:py-5">
         <Link href="/" aria-label="Fostern, início">
           <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-44 md:w-48" />

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useUser, type UsuarioLogado } from "@/lib/use-user";
+import { isMentorEmail } from "@/lib/mentor";
 import { NotificationBell } from "@/components/notification-bell";
 import { MODULES } from "@/lib/learning";
 
@@ -15,11 +16,16 @@ const mainNav: NavItem[] = [
   { href: "/dashboard", label: "Visão geral", d: "M3 10.5 12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5" },
   { href: "/dashboard/aprender", label: "Minha jornada", d: "M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6.6 5.5 5.5 0 0 1 21.5 12C19 16.5 12 21 12 21z" },
   { href: "/dashboard/metas", label: "Metas & universidades", d: "M12 2.5 3 6.5v5c0 5 3.8 8.7 9 10 5.2-1.3 9-5 9-10v-5l-9-4zM8.5 12l2.5 2.5 4.5-5" },
+  { href: "/dashboard/aplicacao", label: "Aplicação", d: "M9 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 8h6M9 12h6M9 16h4" },
   { href: "/dashboard/documentos", label: "Documentos", d: "M14 2.5H7a1.5 1.5 0 0 0-1.5 1.5v16A1.5 1.5 0 0 0 7 21.5h10a1.5 1.5 0 0 0 1.5-1.5V8zM14 2.5V8h5.5M9 13h6M9 17h6" },
   { href: "/dashboard/mentoria", label: "Mentoria", d: "M2.5 20.5c.8-3 3-4.5 5-4.5s4.2 1.5 5 4.5M7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM16 6.5a3.5 3.5 0 1 0-1.2 2.7M14.5 16.6c1.8-.4 3.8 0 5 1.9M19 4.5l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" },
   { href: "/dashboard/financas", label: "Finanças", d: "M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5zM3.5 10h17M16.5 14.5h2" },
   { href: "/dashboard/comunidade", label: "Comunidade", d: "M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z" },
   { href: "/dashboard/tutora", label: "Tutora IA", d: "M4 4h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-4.5 4.5V8a4 4 0 0 1 4-4H4zM8.5 9h7M8.5 13h4" },
+];
+
+const mentorNav: NavItem[] = [
+  { href: "/dashboard/mentor", label: "Painel do mentor", d: "M5 6h14v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1M9 12l2 2 4-4" },
 ];
 
 const accountNav: NavItem[] = [
@@ -70,7 +76,7 @@ function NavLink({ item, active, onNavigate }: { item: NavItem; active: boolean;
   );
 }
 
-function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function SidebarNav({ pathname, onNavigate, mentor }: { pathname: string; onNavigate?: () => void; mentor?: boolean }) {
   const isActive = (item: NavItem) =>
     item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
   return (
@@ -80,6 +86,16 @@ function SidebarNav({ pathname, onNavigate }: { pathname: string; onNavigate?: (
           <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
         ))}
       </nav>
+      {mentor && (
+        <nav>
+          <p className="px-3.5 pb-2 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Mentor</p>
+          <div className="space-y-1">
+            {mentorNav.map((item) => (
+              <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
+            ))}
+          </div>
+        </nav>
+      )}
       <nav className="border-t border-white/10 pt-6">
         <p className="px-3.5 pb-2 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Conta</p>
         <div className="space-y-1">
@@ -328,7 +344,7 @@ function BuscaModal({ aberto, onClose }: { aberto: boolean; onClose: () => void 
 
 function ProfileBlock({ user, onSignOut }: { user: UsuarioLogado | null; onSignOut: () => void }) {
   return (
-    <div className="border-t border-white/10 px-4 py-5">
+    <div className="safe-bottom border-t border-white/10 px-4 py-5">
       <Link href="/dashboard/perfil" className="flex items-center gap-3 rounded-md px-3 py-1.5 transition-colors hover:bg-white/[.04]">
         <Avatar user={user} />
         <div className="min-w-0">
@@ -385,7 +401,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     };
   }, [mobileOpen]);
 
-  const section = [...mainNav, ...accountNav].find(
+  const mentor = isMentorEmail(user?.email);
+  const section = [...mainNav, ...(mentor ? mentorNav : []), ...accountNav].find(
     (item) => item.href === pathname || (item.href !== "/dashboard" && pathname.startsWith(item.href))
   );
 
@@ -396,7 +413,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
           <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
         </div>
-        <SidebarNav pathname={pathname} />
+        <SidebarNav pathname={pathname} mentor={mentor} />
         <MentorCard />
         <ProfileBlock user={user} onSignOut={signOut} />
       </aside>
@@ -417,13 +434,13 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-navy text-ivory shadow-2xl lg:hidden"
+              className="safe-top fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-navy text-ivory shadow-2xl lg:hidden"
             >
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Fechar menu"
-                className="absolute right-3 top-5 grid h-10 w-10 place-items-center border border-white/20 text-ivory transition-colors hover:border-gold hover:text-gold"
+                className="absolute right-3 top-[calc(env(safe-area-inset-top)+20px)] grid h-10 w-10 place-items-center border border-white/20 text-ivory transition-colors hover:border-gold hover:text-gold"
               >
                 <span className="text-lg leading-none">✕</span>
               </button>
@@ -431,7 +448,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <img src="/images/fostern-logo.png" alt="Fostern" className="h-auto w-36" />
                 <p className="mt-5 text-[9px] font-bold uppercase tracking-[.16em] text-ivory/40">Área do estudante</p>
               </div>
-              <SidebarNav pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+              <SidebarNav pathname={pathname} onNavigate={() => setMobileOpen(false)} mentor={mentor} />
               <ProfileBlock user={user} onSignOut={signOut} />
             </motion.aside>
           </>
@@ -439,7 +456,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/10 bg-navy px-4 py-3.5 text-ivory md:px-6 lg:px-8">
+        <header className="safe-top sticky top-0 z-20 flex items-center gap-3 border-b border-white/10 bg-navy px-4 py-3.5 text-ivory md:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}

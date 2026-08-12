@@ -1,5 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Manrope, Newsreader } from "next/font/google";
 import "./globals.css";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-newsreader",
+});
 
 export const metadata: Metadata = {
   title: "Fostern — Ambição merece um plano à altura.",
@@ -11,18 +23,20 @@ export const metadata: Metadata = {
     url: "https://fostern.com",
     siteName: "Fostern",
     locale: "pt_BR",
-    type: "website"
-  }
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#081D36",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className="bg-ivory">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="pt-BR" className={`${manrope.variable} ${newsreader.variable} bg-ivory`}>
       <body>{children}</body>
     </html>
   );

@@ -13,7 +13,12 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
 
 section[id] { scroll-margin-top: 92px; }
 
@@ -21,13 +26,21 @@ body {
   margin: 0;
   background: var(--ivory);
   color: var(--graphite);
-  font-family: "Manrope", Arial, sans-serif;
+  font-family: var(--font-manrope), "Manrope", Arial, sans-serif;
   text-rendering: optimizeLegibility;
 }
 
 ::selection { background: var(--gold); color: var(--navy); }
 
-.font-serif { font-family: "Newsreader", Georgia, serif; }
+.font-serif { font-family: var(--font-newsreader), "Newsreader", Georgia, serif; }
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
 
 .grain::after {
   content: "";
@@ -76,6 +89,13 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @media (prefers-reduced-motion: reduce) {

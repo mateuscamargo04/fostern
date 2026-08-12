@@ -12,7 +12,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org https://yobsnbjmaseywhcxjsrl.supabase.co",
+      "img-src 'self' data: https://commons.wikimedia.org https://upload.wikimedia.org https://yobsnbjmaseywhcxjsrl.supabase.co https://lh3.googleusercontent.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "connect-src 'self' https://yobsnbjmaseywhcxjsrl.supabase.co https://challenges.cloudflare.com",
       "frame-src https://accounts.google.com https://challenges.cloudflare.com",
