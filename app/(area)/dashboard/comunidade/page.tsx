@@ -18,6 +18,13 @@ type Postagem = {
   criado_em: string;
 };
 
+function fmtQuando(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 const icons = {
   trash: "M4 7h16M9 7V4h6v3M6.5 7l1 14h9l1-14M10 11v6M14 11v6",
   send: "M3 11l18-8-8 18-2.5-7.5zM3 11l7.5 2.5",
@@ -164,7 +171,9 @@ export default function ComunidadePage() {
                         <p className="text-[12px] font-semibold text-navy">
                           {post.usuario_id === user?.id ? (user?.name ?? "Você") : "Estudante Fostern"}
                         </p>
-                        <span className="text-[10px] text-graphite/40">· {new Date(post.criado_em).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                        {fmtQuando(post.criado_em) && (
+                          <span className="text-[10px] text-graphite/40">· {fmtQuando(post.criado_em)}</span>
+                        )}
                       </div>
                       <p className="mt-2 whitespace-pre-wrap text-[14px] leading-6 text-graphite/80">{post.texto}</p>
                       {post.usuario_id === user?.id && (

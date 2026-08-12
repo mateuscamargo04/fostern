@@ -48,10 +48,21 @@ function fmtData(iso: string | null): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+const SEARCH_ICON = "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3";
+
 export default function MentorPage() {
   const [alunos, setAlunos] = useState<Aluno[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -96,6 +107,9 @@ export default function MentorPage() {
   const prontos = (alunos ?? []).filter((a) => a.aplicacao?.pronta).length;
   const mentorias = (alunos ?? []).reduce((acc, a) => acc + a.mentorias_pendentes, 0);
 
+  const q = normalize(busca);
+  const filtrados = (alunos ?? []).filter((a) => !q || normalize(`${a.nome ?? ""} ${a.email ?? ""}`).includes(q));
+
   return (
     <div>
       <motion.div {...fade}>
@@ -124,13 +138,51 @@ export default function MentorPage() {
       </motion.div>
 
       <motion.section {...fade} transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }} className="mt-8 rounded-lg border border-mist bg-white">
+        <div className="flex flex-wrap items-center gap-3 border-b border-mist/80 px-5 py-4 md:px-7">
+          <div className="relative w-full max-w-[360px]">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-graphite/40">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                <path d={SEARCH_ICON} />
+              </svg>
+            </span>
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por nome ou e-mail…"
+              aria-label="Buscar estudante"
+              className="w-full border border-mist bg-ivory py-2.5 pl-9 pr-9 text-[13px] text-navy placeholder:text-graphite/40 focus:border-gold focus:outline-none"
+            />
+            {busca && (
+              <button
+                type="button"
+                onClick={() => setBusca("")}
+                aria-label="Limpar busca"
+                className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center text-graphite/50 transition-colors hover:text-gold"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-graphite/50">
+            {busca
+              ? `${filtrados.length} de ${(alunos ?? []).length} estudantes`
+              : `${(alunos ?? []).length} estudantes`}
+          </p>
+        </div>
+
         {alunos!.length === 0 ? (
           <div className="p-10 text-center">
             <p className="text-[13px] font-semibold text-navy">Nenhum estudante cadastrado.</p>
           </div>
+        ) : filtrados.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-[13px] font-semibold text-navy">Nenhum estudante encontrado.</p>
+            <p className="mt-1 text-[12px] text-graphite/55">Ajuste a busca e tente novamente.</p>
+          </div>
         ) : (
           <ul className="divide-y divide-mist/80">
-            {alunos!.map((aluno) => {
+            {filtrados.map((aluno) => {
               const status = STATUS_INFO[aluno.aplicacao?.status ?? "rascunho"] ?? STATUS_INFO.rascunho;
               const initials = (aluno.nome ?? aluno.email ?? "?")
                 .split(" ")

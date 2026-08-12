@@ -41,6 +41,13 @@ function fmtBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function fmtData(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
 export default function DocumentosPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -203,7 +210,7 @@ export default function DocumentosPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold text-navy">{doc.nome}</p>
                     <p className="mt-0.5 text-[10px] text-graphite/50">
-                      {new Date(doc.criado_em).toLocaleDateString("pt-BR")}
+                      {fmtData(doc.criado_em)}
                       {doc.tamanho_bytes ? ` · ${fmtBytes(doc.tamanho_bytes)}` : ""}
                     </p>
                   </div>

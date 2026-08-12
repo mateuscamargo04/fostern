@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isMentorEmail } from "@/lib/mentor";
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -55,8 +56,9 @@ export async function proxy(request: NextRequest) {
 
   // A área do estudante só é liberada para quem tem plano ativo.
   // Aulas de amostra (/dashboard/aprender) ficam abertas para o plano gratuito,
-  // assim como a gestão da conta (perfil e configurações).
-  if (user && isDashboard && !isLearn && !isConta) {
+  // assim como a gestão da conta (perfil e configurações) e o painel do mentor.
+  const isMentorPanel = request.nextUrl.pathname.startsWith("/dashboard/mentor");
+  if (user && isDashboard && !isLearn && !isConta && !(isMentorPanel && isMentorEmail(user.email))) {
     const agora = new Date().toISOString();
     const { data } = await supabase
       .from("assinaturas")

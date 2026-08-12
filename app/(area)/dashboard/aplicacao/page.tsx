@@ -172,6 +172,20 @@ function fmtBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function fmtData(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
+function fmtDataHora(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("pt-BR");
+}
+
 function SectionCard({ titulo, desc, children, delay = 0 }: { titulo: string; desc: string; children: React.ReactNode; delay?: number }) {
   return (
     <motion.section {...fade} transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }} className={cardClass}>
@@ -507,7 +521,7 @@ export default function AplicacaoPage() {
                   <div>
                     <h2 className="font-serif text-[1.3rem] tracking-[-.02em] text-navy">Avaliação da simulação</h2>
                     <p className="mt-1.5 max-w-[520px] text-[12px] leading-5 text-graphite/55">
-                      {avaliadaEm ? `Gerada em ${new Date(avaliadaEm).toLocaleString("pt-BR")}. ` : ""}
+                      {avaliadaEm ? `Gerada em ${fmtDataHora(avaliadaEm)}. ` : ""}
                       Uma referência de como a sua candidatura está hoje, como um avaliador de admissões veria.
                     </p>
                   </div>
@@ -985,7 +999,7 @@ function DocumentosSection({
                   {catLabel(doc.tipo)}
                   {doc.tamanho_bytes ? ` · ${fmtBytes(doc.tamanho_bytes)}` : ""}
                   <span className="mx-1 text-graphite/30">·</span>
-                  {new Date(doc.criado_em).toLocaleDateString("pt-BR")}
+                  {fmtData(doc.criado_em)}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
