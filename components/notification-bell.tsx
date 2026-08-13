@@ -48,41 +48,60 @@ export function NotificationBell() {
   const naoLidas = itens.filter((n) => !n.lida).length;
 
   const carregar = async () => {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setCarregando(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("notificacoes")
+        .select("id, tipo, titulo, corpo, link, lida, criada_em")
+        .order("criada_em", { ascending: false })
+        .limit(10);
+      if (data) setItens(data as Notificacao[]);
+    } catch {
+      // Rede indisponível ou sessão expirada: mantém o que já existe.
+    } finally {
       setCarregando(false);
-      return;
     }
-    const { data } = await supabase
-      .from("notificacoes")
-      .select("id, tipo, titulo, corpo, link, lida, criada_em")
-      .order("criada_em", { ascending: false })
-      .limit(10);
-    if (data) setItens(data as Notificacao[]);
-    setCarregando(false);
   };
 
   useEffect(() => {
     if (!user?.id) return;
     carregar();
     const supabase = createClient();
-    const canal = supabase
-      .channel("fostern:notificacoes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${user.id}` },
-        (payload) => {
-          const nova = payload.new as Notificacao;
-          if (nova?.id) setItens((prev) => [nova, ...prev].slice(0, 10));
-        }
-      )
-      .subscribe();
+    const contextoSeguro = typeof window === "undefined" || window.isSecureContext;
+    let canal: ReturnType<typeof supabase.channel> | null = null;
+    if (contextoSeguro) {
+      try {
+        canal = supabase
+          .channel("fostern:notificacoes")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${user.id}` },
+            (payload) => {
+              const nova = payload.new as Notificacao;
+              if (nova?.id) setItens((prev) => [nova, ...prev].slice(0, 10));
+            }
+          )
+          .subscribe();
+      } catch {
+        canal = null;
+      }
+    }
     const intervalo = window.setInterval(carregar, 120000);
     return () => {
-      supabase.removeChannel(canal);
+      if (canal) {
+        try {
+          supabase.removeChannel(canal);
+        } catch {
+          // Sem WebSocket disponível: nada a remover.
+        }
+      }
       window.clearInterval(intervalo);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
