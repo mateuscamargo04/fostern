@@ -62,7 +62,11 @@ export function loadProgress(): ProgressMap {
 
 export function saveProgress(map: ProgressMap): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    // Armazenamento indisponível (modo privado, quota, WebView): segue sem persistir.
+  }
 }
 
 export function completedCount(map: ProgressMap): number {

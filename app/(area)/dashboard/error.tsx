@@ -23,6 +23,9 @@ export default function DashboardError({
         <p className="mt-2 text-[12px] leading-5 text-graphite/60">
           Ocorreu um erro inesperado. Tente novamente — se o problema continuar, recarregue a página.
         </p>
+        {error?.message && error.message !== "Application error: a client-side exception has occurred (see the browser console for more information)." && (
+          <p className="mt-2 break-all text-[10px] text-graphite/40">{error.message}</p>
+        )}
         {error?.digest && (
           <p className="mt-2 break-all text-[10px] text-graphite/40">Código: {error.digest}</p>
         )}

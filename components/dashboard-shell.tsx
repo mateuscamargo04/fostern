@@ -80,7 +80,7 @@ function SidebarNav({ pathname, onNavigate, mentor }: { pathname: string; onNavi
   const isActive = (item: NavItem) =>
     item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
   return (
-    <div className="no-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto px-4">
+    <div className="sidebar-scroll flex flex-1 flex-col gap-6 overflow-y-auto px-4">
       <nav className="space-y-1">
         {mainNav.map((item) => (
           <NavLink key={item.href} item={item} active={isActive(item)} onNavigate={onNavigate} />
