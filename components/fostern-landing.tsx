@@ -337,7 +337,7 @@ function UniversityAtlas() {
   );
 }
 
-const WHATSAPP_NUMERO = "55169993099045";
+const WHATSAPP_NUMERO = "16993099045";
 
 function ConversationForm() {
   const [submitted, setSubmitted] = useState(false);
@@ -367,7 +367,7 @@ function ConversationForm() {
       <label className="block"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">SEU NOME</span><input required name="name" autoComplete="name" className="h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold" /></label>
       <label className="block"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">E-MAIL</span><input required name="email" type="email" autoComplete="email" className="h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold" /></label>
       <label className="block sm:col-span-2"><span className="mb-2 block text-[9px] font-bold tracking-[.12em] text-ivory/70">EM QUE MOMENTO VOCÊ ESTÁ?</span><select required name="stage" defaultValue="" className="field-select h-12 w-full border border-ivory/25 bg-transparent px-4 text-sm text-ivory outline-none transition focus:border-gold"><option value="" disabled className="text-graphite">Selecione uma opção</option><option className="text-graphite">Ensino Fundamental II</option><option className="text-graphite">Ensino Médio</option><option className="text-graphite">Em processo de aplicação</option><option className="text-graphite">Sou mãe, pai ou responsável</option></select></label>
-      <div className="sm:col-span-2"><button type="submit" disabled={enviando} className="group inline-flex min-h-12 items-center gap-7 border border-gold bg-gold px-5 text-[11px] font-bold text-navy transition hover:-translate-y-0.5 hover:bg-gold/90 disabled:cursor-wait disabled:opacity-60">Iniciar uma conversa <Arrow /></button>{submitted && <p role="status" className="mt-4 text-xs text-ivory/80">Abrimos seu WhatsApp com a mensagem pronta — é só enviar. Ou escreva direto para <a href="mailto:mateusdevlp@gmail.com" className="font-semibold text-gold underline decoration-gold/40 underline-offset-2">mateusdevlp@gmail.com</a>.</p>}<p className="mt-3 text-[10px] leading-5 text-ivory/55">Resposta direta pelo WhatsApp <span className="text-ivory/80">+55 16 99309-9045</span>.</p></div>
+      <div className="sm:col-span-2"><button type="submit" disabled={enviando} className="group inline-flex min-h-12 items-center gap-7 border border-gold bg-gold px-5 text-[11px] font-bold text-navy transition hover:-translate-y-0.5 hover:bg-gold/90 disabled:cursor-wait disabled:opacity-60">Iniciar uma conversa <Arrow /></button>{submitted && <p role="status" className="mt-4 text-xs text-ivory/80">Abrimos seu WhatsApp com a mensagem pronta — é só enviar. Ou escreva direto para <a href="mailto:contact.fostern@gmail.com" className="font-semibold text-gold underline decoration-gold/40 underline-offset-2">contact.fostern@gmail.com</a>.</p>}<p className="mt-3 text-[10px] leading-5 text-ivory/55">Resposta direta pelo WhatsApp <span className="text-ivory/80">+55 16 99309-9045</span>.</p></div>
     </form>
   );
 }
