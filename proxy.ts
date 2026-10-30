@@ -70,7 +70,9 @@ export async function proxy(request: NextRequest) {
   // Aulas de amostra (/dashboard/aprender) ficam abertas para o plano gratuito,
   // assim como a gestão da conta (perfil e configurações) e o painel do mentor.
   const isMentorPanel = request.nextUrl.pathname.startsWith("/dashboard/mentor");
-  if (user && isDashboard && !isLearn && !isConta && !(isMentorPanel && isMentorEmail(user.email))) {
+  const isTutora = request.nextUrl.pathname.startsWith("/dashboard/tutora");
+  const isDashboardRoot = request.nextUrl.pathname === "/dashboard";
+  if (user && isDashboard && !isLearn && !isConta && !isTutora && !isDashboardRoot && !(isMentorPanel && isMentorEmail(user.email))) {
     const agora = new Date().toISOString();
     const { data } = await supabase
       .from("assinaturas")

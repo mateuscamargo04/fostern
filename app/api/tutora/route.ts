@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export const LIMITE_DIARIO = 20;
+const LIMITE_GRATUITO = 1;
 
 function carregarPrompt(): string {
   try {
@@ -61,9 +62,22 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
-  if (!(await planoAtivo(user.id))) {
-    return NextResponse.json({ error: "A Tutora IA faz parte dos planos pagos." }, { status: 403 });
+  const ativo = await planoAtivo(user.id);
+  const limite = ativo ? LIMITE_DIARIO : LIMITE_GRATUITO;
+
+  // Para o plano gratuito, a demonstração é única (uma vez na vida).
+  if (!ativo) {
+    const { data: qualquerUso } = await supabase
+      .from("tutora_uso")
+      .select("contagem")
+      .eq("usuario_id", user.id)
+      .limit(1);
+    if (qualquerUso && qualquerUso.length > 0) {
+      return NextResponse.json({ limite, restante: 0, gratuito: true, usado: true });
+    }
+    return NextResponse.json({ limite, restante: limite, gratuito: true, usado: false });
   }
+
   const dia = hoje();
   const { data: uso } = await supabase
     .from("tutora_uso")
@@ -71,7 +85,7 @@ export async function GET() {
     .eq("usuario_id", user.id)
     .eq("dia", dia)
     .maybeSingle();
-  return NextResponse.json({ limite: LIMITE_DIARIO, restante: Math.max(0, LIMITE_DIARIO - (uso?.contagem ?? 0)) });
+  return NextResponse.json({ limite, restante: Math.max(0, limite - (uso?.contagem ?? 0)) });
 }
 
 export async function POST(request: Request) {
@@ -93,14 +107,28 @@ export async function POST(request: Request) {
   }
 
   const ativo = await planoAtivo(user.id);
+  const limite = ativo ? LIMITE_DIARIO : LIMITE_GRATUITO;
+
   if (!ativo) {
-    return NextResponse.json({ error: "A Tutora IA faz parte dos planos pagos." }, { status: 403 });
+    const { data: qualquerUso } = await supabase
+      .from("tutora_uso")
+      .select("contagem")
+      .eq("usuario_id", user.id)
+      .limit(1);
+    if (qualquerUso && qualquerUso.length > 0) {
+      return NextResponse.json(
+        { error: "Você já usou sua demonstração da Tutora IA. Assine um plano pago para continuar." },
+        { status: 403 },
+      );
+    }
   }
 
   const uso = await usarHoje(supabase, user.id);
   if (!uso.ok) {
     return NextResponse.json(
-      { error: `Você atingiu o limite diário de ${LIMITE_DIARIO} mensagens. Volte amanhã para continuar.` },
+      { error: ativo
+          ? `Você atingiu o limite diário de ${LIMITE_DIARIO} mensagens. Volte amanhã para continuar.`
+          : "Você já usou sua demonstração da Tutora IA. Assine um plano pago para continuar." },
       { status: 429 },
     );
   }
