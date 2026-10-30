@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -50,13 +51,16 @@ const incluido = [
   { termo: "Mentoria individual", descricao: "Sessões com mentoria focada na sua candidatura.", icone: "M2.5 20.5c.8-3 3-4.5 5-4.5s4.2 1.5 5 4.5M7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" },
 ];
 
-export default function PlanosPage() {
+function PlanosContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { loading, ativo } = useActivePlan();
   const [planos, setPlanos] = useState<Plan[]>([]);
   const [assinarSlug, setAssinarSlug] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [autoCheckoutFeito, setAutoCheckoutFeito] = useState(false);
+  const checkoutSlug = searchParams.get("checkout") || searchParams.get("plan");
 
   useEffect(() => {
     let active = true;
@@ -68,6 +72,21 @@ export default function PlanosPage() {
       active = false;
     };
   }, [supabase]);
+
+  useEffect(() => {
+    if (!checkoutSlug || autoCheckoutFeito) return;
+    let active = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active || !session) return;
+      setAutoCheckoutFeito(true);
+      await assinar(checkoutSlug);
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutSlug, autoCheckoutFeito]);
 
   const assinar = async (slug: string) => {
     if (slug === "gratuito") {
@@ -255,5 +274,13 @@ export default function PlanosPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[100svh] bg-ivory" />}>
+      <PlanosContent />
+    </Suspense>
   );
 }

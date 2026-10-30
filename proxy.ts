@@ -43,10 +43,22 @@ export async function proxy(request: NextRequest) {
   };
 
   if (!user && (isDashboard || isPlanos)) {
-    return redirect("/auth", { mode: "login" });
+    const nextPath = request.nextUrl.pathname + request.nextUrl.search;
+    return redirect("/auth", { mode: "login", next: nextPath });
   }
 
   if (user && isAuthPage) {
+    const next = request.nextUrl.searchParams.get("next");
+    const plan = request.nextUrl.searchParams.get("plan");
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      return redirect(next);
+    }
+    if (plan === "mensal" || plan === "anual") {
+      return redirect(`/planos?checkout=${plan}`);
+    }
+    if (plan === "gratuito") {
+      return redirect("/dashboard/aprender");
+    }
     return redirect("/dashboard");
   }
 

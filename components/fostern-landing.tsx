@@ -15,13 +15,13 @@ type Campus = {
 
 const campusImages = {
   mit: "/images/campuses/mit-sunset.jpg",
-  stanford: "https://commons.wikimedia.org/wiki/Special:FilePath/Stanford_Memorial_Church_in_2016.jpg?width=2400",
-  harvard: "https://commons.wikimedia.org/wiki/Special:FilePath/Widener_Library.jpg?width=2400",
-  oxford: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Radcliffe_Camera%2C_Oxford.jpg?width=2400",
-  cambridge: "https://commons.wikimedia.org/wiki/Special:FilePath/Kings_College%2C_Cambridge%2C_Chapel%20%28front%29.jpg?width=2400",
-  eth: "https://commons.wikimedia.org/wiki/Special:FilePath/Hauptgeb%C3%A4ude_der_ETH_Z%C3%BCrich_2022-09-24_02.jpg?width=2400",
-  caltech: "https://commons.wikimedia.org/wiki/Special:FilePath/Building_at_Caltech_2.jpg?width=2400",
-  princeton: "https://commons.wikimedia.org/wiki/Special:FilePath/Nassau_Hall%2C_Princeton_University%2C_Princeton_NJ.jpg?width=2400"
+  stanford: "/images/campuses/stanford.jpg",
+  harvard: "/images/campuses/harvard.jpg",
+  oxford: "/images/campuses/oxford.jpg",
+  cambridge: "/images/campuses/cambridge.jpg",
+  eth: "/images/campuses/eth.jpg",
+  caltech: "/images/campuses/caltech.jpg",
+  princeton: "/images/campuses/princeton.jpg"
 };
 
 const campuses: Campus[] = [
@@ -63,7 +63,7 @@ const plans = [
     description: "Pra começar: as primeiras aulas do módulo 1.",
     features: ["Aulas 1 e 2 do módulo 1", "Exercícios com correção", "Entenda o que as admissões procuram"],
     cta: "Começar grátis",
-    ctaHref: "/auth?mode=register",
+    ctaHref: "/auth?mode=register&plan=gratuito",
     highlight: false
   },
   {
@@ -73,7 +73,7 @@ const plans = [
     description: "Acesso completo, mês a mês.",
     features: ["Acesso a todos os módulos", "Tutor de IA", "Acesso à comunidade", "Estratégia para SAT e TOEFL", "Mentoria individual"],
     cta: "Assinar mensal",
-    ctaHref: "/planos",
+    ctaHref: "/auth?mode=register&plan=mensal",
     highlight: true
   },
   {
@@ -83,7 +83,7 @@ const plans = [
     description: "O mesmo acesso completo, com renovação automática.",
     features: ["Tudo do plano Mensal", "Economia frente ao valor mensal", "Prioridade na mentoria", "Revisão de redações e projetos"],
     cta: "Assinar anual",
-    ctaHref: "/planos",
+    ctaHref: "/auth?mode=register&plan=anual",
     highlight: false
   }
 ];

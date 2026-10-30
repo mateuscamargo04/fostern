@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthPanel } from "@/components/auth-panel";
 
 export const metadata: Metadata = {
@@ -6,7 +7,11 @@ export const metadata: Metadata = {
   description: "Acesse sua conta Fostern ou crie uma para começar sua preparação internacional."
 };
 
-export default async function AuthPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
+export default async function AuthPage({ searchParams }: { searchParams: Promise<{ mode?: string; plan?: string; next?: string }> }) {
   const { mode } = await searchParams;
-  return <AuthPanel initialMode={mode === "register" ? "register" : "login"} />;
+  return (
+    <Suspense fallback={null}>
+      <AuthPanel initialMode={mode === "register" ? "register" : "login"} />
+    </Suspense>
+  );
 }

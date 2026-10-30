@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "login" | "register";
@@ -47,6 +48,9 @@ function EyeIcon({ visible }: { visible: boolean }) {
 }
 
 export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
+  const next = searchParams.get("next");
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -119,6 +123,8 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
       [/Unable to validate email/i, "E-mail inválido. Confira o formato."],
       [/rate limit/i, "Muitas tentativas. Aguarde um minuto e tente de novo."],
       [/provider is not enabled/i, "Login com Google ainda não foi configurado. Use e-mail e senha por enquanto."],
+      [/failed to fetch/i, "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente."],
+      [/network/i, "Falha de rede. Tente novamente em instantes."],
     ];
     for (const [pattern, replacement] of map) {
       if (pattern.test(raw)) return replacement;
@@ -139,21 +145,62 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
     if (TURNSTILE_SITE_KEY && !captchaToken) return setError("Complete a verificação de segurança.");
     setSubmitting(true);
     const supabase = createClient();
+    const redirectTo = (path: string) => {
+      if (typeof window === "undefined") return;
+      window.location.href = path;
+    };
+    const afterAuth = async () => {
+      const paid = plan === "mensal" || plan === "anual";
+      if (paid) {
+        try {
+          const res = await fetch("/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ planSlug: plan }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.url) {
+            redirectTo(data.url);
+            return;
+          }
+        } catch {
+          // segue para a tela de planos se o checkout falhar
+        }
+        redirectTo(next && next.startsWith("/") ? next : "/planos");
+        return;
+      }
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        redirectTo(next);
+        return;
+      }
+      if (plan === "gratuito") {
+        redirectTo("/dashboard/aprender");
+        return;
+      }
+      redirectTo("/dashboard");
+    };
     try {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captchaToken ?? undefined } });
         if (error) throw error;
-        window.location.href = "/dashboard";
+        await afterAuth();
         return;
       }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { nome: name }, captchaToken: captchaToken ?? undefined },
+        options: {
+          data: { nome: name },
+          captchaToken: captchaToken ?? undefined,
+          emailRedirectTo:
+            typeof window !== "undefined"
+              ? `${window.location.origin}/auth?plan=${encodeURIComponent(plan ?? "")}&next=${encodeURIComponent(next ?? "")}`
+              : undefined,
+        },
       });
       if (error) throw error;
       if (data.session) {
-        window.location.href = "/dashboard";
+        await afterAuth();
         return;
       }
       finish("Conta criada! Enviamos um link de confirmação para o seu e-mail.");
@@ -173,7 +220,7 @@ export function AuthPanel({ initialMode = "login" }: { initialMode?: Mode }) {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/dashboard` },
+        options: { redirectTo: `${window.location.origin}/auth?plan=${encodeURIComponent(plan ?? "")}&next=${encodeURIComponent(next ?? "")}` },
       });
       if (error) throw error;
     } catch (err) {
